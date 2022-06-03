@@ -54,6 +54,10 @@ class Casia2(Dataset):
         file = self._input_files[idx]
         if file.startswith('Au'):
             image = Image.open(os.path.join(self._authentic_dir, file))
+
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+
             image = self._image_transform(image)
 
             mask = torch.zeros(size=[1] + list(image.size()[1:]))
@@ -67,7 +71,7 @@ class Casia2(Dataset):
                 if tamp_id + '_gt' == f[-12:-4]:
                     gt_file = f
                     break
-            
+
             mask = Image.open(os.path.join(self._ground_truth_dir, gt_file))
             mask = self._mask_transform(mask)
 
