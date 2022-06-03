@@ -7,7 +7,7 @@ Currently, the supported datasets are:
 
 ## Install
 ```bash
-pip install image-manipulation-datasets
+pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.1
 ```
 
 ## Examples
