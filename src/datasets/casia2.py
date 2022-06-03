@@ -64,6 +64,10 @@ class Casia2(Dataset):
 
         else:
             image = Image.open(os.path.join(self._tampered_dir, file))
+            
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            
             image = self._image_transform(image)
 
             tamp_id = file[-9:-4]
