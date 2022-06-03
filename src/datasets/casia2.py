@@ -35,10 +35,17 @@ class Casia2(Dataset):
 
         self._ground_truth_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
 
-        self._output_files = [f for f in os.listdir(self._ground_truth_dir) if '.tif' in f or '.jpg' in f]
+        self._output_files = [f for f in os.listdir(self._ground_truth_dir) if f.endswith('.tif') or f.endswith('.jpg') or f.endswith('.png')]
 
-        self._transform = transforms.Compose([
+        self._image_transform = transforms.Compose([
             transforms.Resize([256, 256]),
+            transforms.PILToTensor(),
+            transforms.ConvertImageDtype(torch.float),
+        ])
+
+        self._mask_transform = transforms.Compose([
+            transforms.Resize([256, 256]),
+            transforms.Grayscale(),
             transforms.PILToTensor(),
             transforms.ConvertImageDtype(torch.float),
         ])
@@ -47,21 +54,22 @@ class Casia2(Dataset):
         file = self._input_files[idx]
         if file.startswith('Au'):
             image = Image.open(os.path.join(self._authentic_dir, file))
-            image = self._transform(image)
+            image = self._image_transform(image)
 
             mask = torch.zeros(size=[1] + list(image.size()[1:]))
 
         else:
             image = Image.open(os.path.join(self._tampered_dir, file))
-            image = self._transform(image)
+            image = self._image_transform(image)
 
             tamp_id = file[-9:-4]
             for f in self._output_files:
-                if tamp_id + '_gt' in f:
+                if tamp_id + '_gt' == f[-12:-4]:
                     gt_file = f
                     break
+            
             mask = Image.open(os.path.join(self._ground_truth_dir, gt_file))
-            mask = self._transform(mask)
+            mask = self._mask_transform(mask)
 
         return image, mask
 
