@@ -12,8 +12,8 @@ class Splicing(Dataset):
         self._image_dirs = [os.path.join(data_dir, f'splicing_{i}_img', 'img') for i in range(1, 8)]
         self._mask_dirs = [os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask') for i in range(1, 8)]
 
-        image_files = [f for shard in self._image_dirs for f in os.listdir(shard)]
-        mask_files = [f for shard in self._mask_dirs for f in os.listdir(shard)]
+        image_files = [os.path.join(shard, f) for shard in self._image_dirs for f in os.listdir(shard)]
+        mask_files = [os.path.join(shard, f) for shard in self._mask_dirs for f in os.listdir(shard)]
 
         split_size = len(image_files) // 10
 
@@ -67,11 +67,11 @@ class Splicing(Dataset):
 
     def __getitem__(self, idx):
         image_file = self._input_files[idx]
-        image = Image.open(os.path.join(self._image_dir, image_file))
+        image = Image.open(image_file)
         image = self._image_transform(image)
 
         mask_file = self._output_files[idx]
-        mask = Image.open(os.path.join(self._mask_dir, mask_file))
+        mask = Image.open(mask_file)
         mask = self._mask_transform(mask)
 
         return image, mask
