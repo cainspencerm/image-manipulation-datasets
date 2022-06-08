@@ -1,5 +1,5 @@
 dist/
 build/
 src/image_manipulation_datasets.egg-info/
-src/datasets/.ipynb_checkpoints/
+*.ipynb_checkpoints/
 src/datasets/__pycache__/

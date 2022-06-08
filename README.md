@@ -7,10 +7,11 @@ Currently, the supported datasets are:
     - CASIA 2.0
 - Defacto
     - Copy/Move
+    - Splicing
 
 ## Install
 ```bash
-pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.2
+pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.3
 ```
 
 ## Examples
@@ -32,7 +33,15 @@ dataset = casia2.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'v
 from datasets import defacto
 
 # Create dataset object for dataloader.
-dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train', 'val', 'test']
+dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train', 'val', 'test', 'benchmark']
+```
+
+### Defacto Splicing
+
+```python
+from datasets import defacto
+
+dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train', 'val', 'test', 'benchmark']
 ```
 
 ### Testing
