@@ -38,9 +38,9 @@ class Splicing(Dataset):
             if_id = f.split('.')[0].split('_')[-1]
             for mask_file in mask_files:
                 if if_id + '.jpg' in mask_file:
-                    self._output_files.append(mask_files[idx])
+                    self._output_files.append(mask_file)
                     break
-            assert if_id + '.jpg' in mask_file
+            assert self._output_files[-1] == mask_file
 
         self._image_transform = transforms.Compose([
             transforms.Resize([256, 256]),
