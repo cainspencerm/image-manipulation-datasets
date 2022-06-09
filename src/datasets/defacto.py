@@ -21,37 +21,23 @@ class Splicing(Dataset):
         if split == 'train':
             self._input_files = image_files[:split_size * 8]
 
-            self._output_files = []
-            for f in self._input_files:
-                if_id = f.split('.')[0]
-                idx = mask_files.index(if_id + '.jpg')
-                self._output_files.append(mask_files[idx])
-
         elif split == 'val':
             self._input_files = image_files[split_size * 8 : split_size * 9]
-
-            self._output_files = []
-            for f in self._input_files:
-                if_id = f.split('.')[0]
-                idx = mask_files.index(if_id + '.jpg')
-                self._output_files.append(mask_files[idx])
 
         elif split == 'test':
             self._input_files = image_files[split_size * 9:]
 
-            self._output_files = []
-            for f in self._input_files:
-                if_id = f.split('.')[0]
-                idx = mask_files.index(if_id + '.jpg')
-                self._output_files.append(mask_files[idx])
-
         elif split == 'benchmark':
             self._input_files = image_files[:1000]
-            self._output_files = mask_files[:1000]
 
         else:
             self._input_files = image_files
-            self._output_files = mask_files
+
+        self._output_files = []
+        for f in self._input_files:
+            if_id = f.split('.')[0]
+            idx = mask_files.index(if_id + '.jpg')
+            self._output_files.append(mask_files[idx])
 
         self._image_transform = transforms.Compose([
             transforms.Resize([256, 256]),
@@ -96,38 +82,23 @@ class CopyMove(Dataset):
         if split == 'train':
             self._input_files = image_files[:split_size * 8]
 
-            self._output_files = []
-            for f in self._input_files:
-                if_id = f.split('.')[0]
-                idx = mask_files.index(if_id + '.jpg')
-                self._output_files.append(mask_files[idx])
-
         elif split == 'val':
             self._input_files = image_files[split_size * 8 : split_size * 9]
-
-            self._output_files = []
-            for f in self._input_files:
-                if_id = f.split('.')[0]
-                idx = mask_files.index(if_id + '.jpg')
-                self._output_files.append(mask_files[idx])
 
         elif split == 'test':
             self._input_files = image_files[split_size * 9:]
 
-            self._output_files = []
-            for f in self._input_files:
-                if_id = f.split('.')[0]
-                idx = mask_files.index(if_id + '.jpg')
-                self._output_files.append(mask_files[idx])
-
         elif split == 'benchmark':
             self._input_files = image_files[:1000]
-            self._output_files = mask_files[:1000]
 
         else:
             self._input_files = image_files
 
-            self._output_files = mask_files
+        self._output_files = []
+        for f in self._input_files:
+            if_id = f.split('.')[0]
+            idx = mask_files.index(if_id + '.jpg')
+            self._output_files.append(mask_files[idx])
 
         self._image_transform = transforms.Compose([
             transforms.Resize([256, 256]),
