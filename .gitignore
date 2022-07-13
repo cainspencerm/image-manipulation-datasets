@@ -3,3 +3,5 @@ build/
 src/image_manipulation_datasets.egg-info/
 *.ipynb_checkpoints/
 src/datasets/__pycache__/
+coverage/
+COVERAGE.zip
