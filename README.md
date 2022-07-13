@@ -11,7 +11,7 @@ Currently, the supported datasets are:
 
 ## Install
 ```bash
-pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.3
+pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.4
 ```
 
 ## Examples
@@ -42,6 +42,14 @@ dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train'
 from datasets import defacto
 
 dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train', 'val', 'test', 'benchmark']
+```
+
+### Coverage
+
+```python
+from datasets import coverage
+
+dataset = coverage.Coverage(data_dir='data/coverage')
 ```
 
 ### Testing
