@@ -8,6 +8,7 @@ Currently, the supported datasets are:
 - Defacto
     - Copy/Move
     - Splicing
+- Coverage
 
 ## Install
 ```bash
