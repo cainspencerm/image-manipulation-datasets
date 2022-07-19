@@ -76,7 +76,6 @@ class Casia2(Dataset):
             mask = self._mask_transform(mask)
 
         image = image[:3]
-        print(image.size(), file)
 
         return image, mask
 
