@@ -75,6 +75,8 @@ class Casia2(Dataset):
             mask = Image.open(os.path.join(self._ground_truth_dir, gt_file))
             mask = self._mask_transform(mask)
 
+        image = image[:3]
+
         return image, mask
 
     def __len__(self):
