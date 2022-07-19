@@ -75,9 +75,9 @@ class Casia2(Dataset):
             mask = Image.open(os.path.join(self._ground_truth_dir, gt_file))
             mask = self._mask_transform(mask)
 
-        if image.size()[0] == 4:
-            image = image[:3]
-            mask = mask[:3]
+        if image.size()[0] == 4 or mask.size()[0] == 4:
+            image = image[:2]
+            mask = mask[:2]
 
         return image, mask
 
