@@ -77,6 +77,7 @@ class Casia2(Dataset):
 
         if image.size()[0] == 4:
             image = image[:3]
+            mask = mask[:3]
 
         return image, mask
 
