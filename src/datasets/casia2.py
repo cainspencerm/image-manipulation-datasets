@@ -99,6 +99,8 @@ class Casia2(Dataset):
 
             mask = self._mask_transform(mask)
 
+        image = image[:3]
+
         return image, mask
 
     def __len__(self):
