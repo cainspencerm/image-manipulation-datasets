@@ -41,9 +41,12 @@ class Splicing(Dataset):
         # Fetch the ground truth filenames.
         self._output_files = []
         for f in self._input_files:
-            if_id = f.split('.')[0]
-            idx = mask_files.index(if_id + '.jpg')
-            self._output_files.append(mask_files[idx])
+            if_id = f.split('.')[0].split('_')[-1]
+            for mask_file in mask_files:
+                if if_id + '.jpg' in mask_file:
+                    self._output_files.append(mask_file)
+                    break
+            assert self._output_files[-1] == mask_file
 
         # Create transform callables for raw images and masks.
         if image_transform is None:
