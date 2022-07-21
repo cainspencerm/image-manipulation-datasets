@@ -52,7 +52,6 @@ class Casia2(Dataset):
         if mask_transform is None:
             self._mask_transform = transforms.Compose([
                 transforms.Resize([256, 256]),
-                # transforms.Grayscale(),
                 transforms.PILToTensor(),
                 transforms.ConvertImageDtype(torch.float),
             ])
