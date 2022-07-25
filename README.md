@@ -8,11 +8,12 @@ Currently, the supported datasets are:
 - Defacto
     - Copy/Move
     - Splicing
+    - Inpainting
 - Coverage
 
 ## Install
 ```bash
-pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.4
+pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.5
 ```
 
 ## Examples
