@@ -195,7 +195,7 @@ class Inpainting(Dataset):
         self._output_files = []
         for f in self._input_files:
             if_id = f.split('.')[0]
-            idx = mask_files.index(if_id + '.jpg')
+            idx = mask_files.index(if_id + '.tif')
             self._output_files.append(mask_files[idx])
 
         # Create transform callables for raw images and masks.
