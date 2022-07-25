@@ -168,7 +168,7 @@ class Inpainting(Dataset):
 
         # Fetch the ground truth filenames.
         self._mask_dir = os.path.join(data_dir, 'inpainting_annotations', 'probe_mask')
-        mask_files = [f for f in os.listdir(self._mask_dir) if f.endswith('.jpg')]
+        mask_files = [f for f in os.listdir(self._mask_dir) if f.endswith('.tif')]
 
         split_size = len(image_files) // 10
 
