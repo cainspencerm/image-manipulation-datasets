@@ -31,8 +31,15 @@ class Casia2(Dataset):
             self._input_files = auth_files[auth_split_size * 9:]
             self._input_files += tamp_files[tamp_split_size * 9:]
 
+        elif split == 'benchmark':
+            self._input_files = auth_files[:500]
+            self._input_files += tamp_files[:500]
+
         elif split == 'full':
             self._input_files = auth_files + tamp_files
+
+        else:
+            raise ValueError('Unknown split: ' + split)
 
         # Fetch the ground truth filenames.
         self._ground_truth_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')

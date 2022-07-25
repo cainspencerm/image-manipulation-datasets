@@ -25,7 +25,7 @@ Ensure that the ground truth directory is in data_dir and named 'CASIA 2 Groundt
 from datasets import casia2
 
 # Create dataset object for dataloader.
-dataset = casia2.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'val', or 'test']
+dataset = casia2.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ### Defacto Copy/Move
@@ -34,7 +34,7 @@ dataset = casia2.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'v
 from datasets import defacto
 
 # Create dataset object for dataloader.
-dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train', 'val', 'test', 'benchmark']
+dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ### Defacto Splicing
@@ -42,7 +42,15 @@ dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train'
 ```python
 from datasets import defacto
 
-dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train', 'val', 'test', 'benchmark']
+dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
+```
+
+### Defacto Inpainting
+
+```python
+from datasets import defacto
+
+datatset = defacto.Inpainting(data_dir='data/inpainting') # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ### Coverage
