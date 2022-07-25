@@ -6,14 +6,16 @@ from PIL import Image
 
 
 class Splicing(Dataset):
-    def __init__(self, data_dir=None, split=None):
+    def __init__(self, data_dir: str='data', split: str='full', image_transform=None, mask_transform=None):
         super().__init__()
 
+        # Fetch the image filenames.
         self._image_dirs = [os.path.join(data_dir, f'splicing_{i}_img', 'img') for i in range(1, 8)]
-        self._mask_dirs = [os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask') for i in range(1, 8)]
+        image_files = [os.path.join(shard, f) for shard in self._image_dirs for f in os.listdir(shard) if '.tif' in f]
 
-        image_files = [os.path.join(shard, f) for shard in self._image_dirs for f in os.listdir(shard)]
-        mask_files = [os.path.join(shard, f) for shard in self._mask_dirs for f in os.listdir(shard)]
+        # Fetch the mask filenames.
+        self._mask_dirs = [os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask') for i in range(1, 8)]
+        mask_files = [os.path.join(shard, f) for shard in self._mask_dirs for f in os.listdir(shard) if '.jpg' in f]
 
         split_size = len(image_files) // 10
 
@@ -21,7 +23,7 @@ class Splicing(Dataset):
         if split == 'train':
             self._input_files = image_files[:split_size * 8]
 
-        elif split == 'val':
+        elif split == 'valid':
             self._input_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
@@ -30,9 +32,13 @@ class Splicing(Dataset):
         elif split == 'benchmark':
             self._input_files = image_files[:1000]
 
-        else:
+        elif split == 'full':
             self._input_files = image_files
 
+        else:
+            raise ValueError(f'Unknown split: {split}')
+
+        # Fetch the ground truth filenames.
         self._output_files = []
         for f in self._input_files:
             if_id = f.split('.')[0].split('_')[-1]
@@ -42,17 +48,25 @@ class Splicing(Dataset):
                     break
             assert self._output_files[-1] == mask_file
 
-        self._image_transform = transforms.Compose([
-            transforms.Resize([256, 256]),
-            transforms.PILToTensor(),
-            transforms.ConvertImageDtype(torch.float),
-        ])
+        # Create transform callables for raw images and masks.
+        if image_transform is None:
+            self._image_transform = transforms.Compose([
+                transforms.Resize([256, 256]),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+            ])
 
-        self._mask_transform = transforms.Compose([
-            transforms.Resize([256, 256]),
-            transforms.PILToTensor(),
-            transforms.ConvertImageDtype(torch.float),
-        ])
+        else:
+            self._image_transform = image_transform
+
+        if mask_transform is None:
+            self._mask_transform = transforms.Compose([
+                transforms.Resize([256, 256]),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+            ])
+        else:
+            self._mask_transform = mask_transform
 
     def __getitem__(self, idx):
         image_file = self._input_files[idx]
@@ -70,13 +84,14 @@ class Splicing(Dataset):
 
 
 class CopyMove(Dataset):
-    def __init__(self, data_dir=None, split=None):
+    def __init__(self, data_dir: str='data', split: str='full', image_transform=None, mask_transform=None):
         super().__init__()
 
+        # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'copymove_img', 'img')
-        self._mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
-
         image_files = [f for f in os.listdir(self._image_dir) if f.endswith('.tif')]
+
+        self._mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
         mask_files = [f for f in os.listdir(self._mask_dir) if f.endswith('.jpg')]
 
         split_size = len(image_files) // 10
@@ -85,7 +100,7 @@ class CopyMove(Dataset):
         if split == 'train':
             self._input_files = image_files[:split_size * 8]
 
-        elif split == 'val':
+        elif split == 'valid':
             self._input_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
@@ -94,26 +109,38 @@ class CopyMove(Dataset):
         elif split == 'benchmark':
             self._input_files = image_files[:1000]
 
-        else:
+        elif split == 'full':
             self._input_files = image_files
 
+        else:
+            raise ValueError(f'Unknown split: {split}')
+
+        # Fetch the ground truth filenames.
         self._output_files = []
         for f in self._input_files:
             if_id = f.split('.')[0]
             idx = mask_files.index(if_id + '.jpg')
             self._output_files.append(mask_files[idx])
 
-        self._image_transform = transforms.Compose([
-            transforms.Resize([256, 256]),
-            transforms.PILToTensor(),
-            transforms.ConvertImageDtype(torch.float),
-        ])
+        # Create transform callables for raw images and masks.
+        if image_transform is None:
+            self._image_transform = transforms.Compose([
+                transforms.Resize([256, 256]),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+            ])
 
-        self._mask_transform = transforms.Compose([
-            transforms.Resize([256, 256]),
-            transforms.PILToTensor(),
-            transforms.ConvertImageDtype(torch.float),
-        ])
+        else:
+            self._image_transform = image_transform
+
+        if mask_transform is None:
+            self._mask_transform = transforms.Compose([
+                transforms.Resize([256, 256]),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+            ])
+        else:
+            self._mask_transform = mask_transform
 
     def __getitem__(self, idx):
         image_file = self._input_files[idx]
