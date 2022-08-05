@@ -6,7 +6,7 @@ from PIL import Image
 
 
 class Casia2(Dataset):
-    def __init__(self, data_dir: str='data', split: str='full', image_transform=None, mask_transform=None) -> None:
+    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None) -> None:
         super().__init__()
 
         # Fetch the image filenames.

@@ -6,7 +6,7 @@ from PIL import Image
 
 
 class Splicing(Dataset):
-    def __init__(self, data_dir: str='data', split: str='full', image_transform=None, mask_transform=None):
+    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None):
         super().__init__()
 
         # Fetch the image filenames.
@@ -84,7 +84,7 @@ class Splicing(Dataset):
 
 
 class CopyMove(Dataset):
-    def __init__(self, data_dir: str='data', split: str='full', image_transform=None, mask_transform=None):
+    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None):
         super().__init__()
 
         # Fetch the image filenames.
@@ -159,7 +159,7 @@ class CopyMove(Dataset):
 
 
 class Inpainting(Dataset):
-    def __init__(self, data_dir: str='data', split: str='full', image_transform=None, mask_transform=None):
+    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None):
         super().__init__()
 
         # Fetch the image filenames.

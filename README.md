@@ -23,7 +23,7 @@ pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@
 Ensure that the ground truth directory is in data_dir and named 'CASIA 2 Groundtruth'.
 
 ```python
-from datasets import casia2
+from image_manip import casia2
 
 # Create dataset object for dataloader.
 dataset = casia2.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
@@ -32,7 +32,7 @@ dataset = casia2.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'v
 ### Defacto Copy/Move
 
 ```python
-from datasets import defacto
+from image_manip import defacto
 
 # Create dataset object for dataloader.
 dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
@@ -41,7 +41,7 @@ dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train'
 ### Defacto Splicing
 
 ```python
-from datasets import defacto
+from image_manip import defacto
 
 dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
@@ -49,7 +49,7 @@ dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train',
 ### Defacto Inpainting
 
 ```python
-from datasets import defacto
+from image_manip import defacto
 
 datatset = defacto.Inpainting(data_dir='data/inpainting') # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
@@ -57,7 +57,7 @@ datatset = defacto.Inpainting(data_dir='data/inpainting') # optional split=['tra
 ### Coverage
 
 ```python
-from datasets import coverage
+from image_manip import coverage
 
 dataset = coverage.Coverage(data_dir='data/coverage')
 ```
