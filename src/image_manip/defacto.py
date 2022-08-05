@@ -3,7 +3,7 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
-from typing import Tuple
+from typing import Tuple, Callable
 
 
 class Splicing(Dataset):
@@ -24,6 +24,9 @@ class Splicing(Dataset):
     probemask subdirectory indicates the location of the forgery and one under the
     donormask indicates the location of the source. The external image can be found in
     the JSON file under the graph subdirectory.
+
+    To download the dataset, please visit the following link:
+    https://defactodataset.github.io
 
     Directory structure:
     Defacto Splicing
@@ -79,16 +82,25 @@ class Splicing(Dataset):
             'benchmark', and 'full'.
         image_transform (callable): The transform to be applied on the image.
         mask_transform (callable): The transform to be applied on the mask.
+        download (bool): Whether to download the dataset.
     '''
 
     def __init__(
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform=None,
-        mask_transform=None,
+        image_transform: Callable = None,
+        mask_transform: Callable = None,
+        download: bool = False,
     ) -> None:
         super().__init__()
+
+        if download:
+            raise NotImplementedError(
+                'Downloading is not implemented yet due to the requirement of a '
+                'browser to obtain the dataset. Please refer to the following link '
+                'for more information: https://defactodataset.github.io.'
+            )
 
         # Fetch the image filenames.
         self._image_dirs = [
@@ -201,6 +213,9 @@ class CopyMove(Dataset):
     the probemask subdirectory indicates the location of the forgery and one under the
     donor_mask indicates the location of the source within the image.
 
+    To download the dataset, please visit the following link:
+    https://defactodataset.github.io
+
     Directory structure:
     Defacto CopyMove
     ├── copymove_annotations
@@ -232,16 +247,25 @@ class CopyMove(Dataset):
             'benchmark', and 'full'.
         image_transform (callable): The transform to be applied on the image.
         mask_transform (callable): The transform to be applied on the mask.
+        download (bool): Whether to download the dataset.
     '''
 
     def __init__(
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform=None,
-        mask_transform=None,
+        image_transform: Callable = None,
+        mask_transform: Callable = None,
+        download: bool = False,
     ) -> None:
         super().__init__()
+
+        if download:
+            raise NotImplementedError(
+                'Downloading is not implemented yet due to the requirement of a '
+                'browser to obtain the dataset. Please refer to the following link '
+                'for more information: https://defactodataset.github.io.'
+            )
 
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'copymove_img', 'img')
@@ -336,6 +360,9 @@ class Inpainting(Dataset):
     under the probemask subdirectory indicates the location of the forgery and one
     under the inpaintmask which is the mask use for the inpainting algorithm.
 
+    To download the dataset, please visit the following link:
+    https://defactodataset.github.io
+
     Directory structure:
     Defacto Inpainting
     ├── inpainting_annotations
@@ -367,16 +394,25 @@ class Inpainting(Dataset):
             'benchmark', or 'full'.
         image_transform (callable): The transform to be applied on the image.
         mask_transform (callable): The transform to be applied on the mask.
+        download (bool): Whether to download the dataset.
     '''
 
     def __init__(
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform=None,
-        mask_transform=None,
+        image_transform: Callable = None,
+        mask_transform: Callable = None,
+        download: bool = False,
     ) -> None:
         super().__init__()
+
+        if download:
+            raise NotImplementedError(
+                'Downloading is not implemented yet due to the requirement of a '
+                'browser to obtain the dataset. Please refer to the following link '
+                'for more information: https://defactodataset.github.io.'
+            )
 
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'inpainting_img', 'img')

@@ -3,13 +3,16 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
-from typing import Tuple
+from typing import Tuple, Callable
 
 
 class Coverage(Dataset):
     '''The Copy-Move Forgery Database with Similar but Genuine Objects (COVERAGE) accompanies the following publication: "COVERAGE--A NOVEL DATABASE FOR COPY-MOVE FORGERY DETECTION," IEEE International Conference on Image processing (ICIP), 2016.
 
     COVERAGE contains copymove forged (CMFD) images and their originals with similar but genuine objects (SGOs). COVERAGE is designed to highlight and address tamper detection ambiguity of popular methods, caused by self-similarity within natural images. In COVERAGE, forged-original pairs are annotated with (i) the duplicated and forged region masks, and (ii) the tampering factor/similarity metric. For benchmarking, forgery quality is evaluated using (i) computer vision-based methods, and (ii) human detection performance.
+
+    To download the dataset, please visit the following link:
+    https://github.com/wenbihan/coverage
 
     Directory structure:
     COVERAGE
@@ -36,18 +39,25 @@ class Coverage(Dataset):
         mask_type (str): The type of mask to use. Must be 'forged', 'copy', or 'paste'.
         image_transform (callable): The transform to be applied on the image.
         mask_transform (callable): The transform to be applied on the mask.
+        download (bool): Whether to download the dataset.
     '''
 
     def __init__(
         self,
         data_dir: str,
         mask_type: str = 'forged',
-        image_transform=None,
-        mask_transform=None,
+        image_transform: Callable = None,
+        mask_transform: Callable = None,
+        download: bool = False,
     ) -> None:
         super().__init__()
 
         assert mask_type in ['forged', 'copy', 'paste']
+
+        if download:
+            raise NotImplementedError(
+                'Downloading is not implemented yet due to the requirement of a browser to obtain the dataset. Please refer to the following link for more information: https://github.com/wenbihan/coverage.'
+            )
 
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'image')

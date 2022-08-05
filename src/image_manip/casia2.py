@@ -3,11 +3,14 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
-from typing import Tuple
+from typing import Tuple, Callable
 
 
 class Casia2(Dataset):
     '''CASIA V2 is a dataset for forgery classification. It contains 4795 images, 1701 authentic and 3274 forged.
+
+    To download the dataset, please visit the following link:
+    https://github.com/namtpham/casia2groundtruth
 
     Directory structure:
     CASIA 2.0
@@ -33,16 +36,23 @@ class Casia2(Dataset):
             'benchmark', or 'full'.
         image_transform (callable): The transform to be applied on the image.
         mask_transform (callable): The transform to be applied on the mask.
+        download (bool): Whether to download the dataset.
     '''
 
     def __init__(
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform=None,
-        mask_transform=None,
+        image_transform: Callable = None,
+        mask_transform: Callable = None,
+        download: bool = False,
     ) -> None:
         super().__init__()
+
+        if download:
+            raise NotImplementedError(
+                'Downloading is not implemented yet due to the requirement of a browser to obtain the dataset. Please refer to the following link for more information: https://github.com/namtpham/casia2groundtruth.'
+            )
 
         # Fetch the image filenames.
         self._authentic_dir = os.path.join(data_dir, 'Au')
