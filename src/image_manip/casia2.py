@@ -7,6 +7,34 @@ from typing import Tuple
 
 
 class Casia2(Dataset):
+    '''CASIA V2 is a dataset for forgery classification. It contains 4795 images, 1701 authentic and 3274 forged.
+
+    Directory structure:
+    CASIA 2.0
+    ├── Au
+    │   ├── Au_ani_00001.jpg
+    │   ├── Au_ani_00002.jpg
+    │   ├── ...
+    │   └── Au_txt_30029.jpg
+    ├── CASIA 2 Groundtruth
+    │   ├── Tp_D_CND_M_N_ani00018_sec00096_00138_gt.png
+    │   ├── Tp_D_CND_M_N_art00076_art00077_10289_gt.png
+    │   ├── ...
+    │   └── Tp_S_NRN_S_O_sec00036_sec00036_00764_gt.png
+    └── Tp
+        ├── Tp_D_CND_M_N_ani00018_sec00096_00138.tif
+        ├── Tp_D_CND_M_N_art00076_art00077_10289.tif
+        ├── ...
+        └── Tp_S_NRN_S_O_sec00036_sec00036_00764.tif
+
+    Args:
+        data_dir (str): The directory of the dataset.
+        split (str): The split of the dataset. Must be 'train', 'valid', 'test',
+            'benchmark', or 'full'.
+        image_transform (callable): The transform to be applied on the image.
+        mask_transform (callable): The transform to be applied on the mask.
+    '''
+
     def __init__(
         self,
         data_dir: str,

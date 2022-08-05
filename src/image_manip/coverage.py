@@ -7,12 +7,43 @@ from typing import Tuple
 
 
 class Coverage(Dataset):
+    '''The Copy-Move Forgery Database with Similar but Genuine Objects (COVERAGE) accompanies the following publication: "COVERAGE--A NOVEL DATABASE FOR COPY-MOVE FORGERY DETECTION," IEEE International Conference on Image processing (ICIP), 2016.
+
+    COVERAGE contains copymove forged (CMFD) images and their originals with similar but genuine objects (SGOs). COVERAGE is designed to highlight and address tamper detection ambiguity of popular methods, caused by self-similarity within natural images. In COVERAGE, forged-original pairs are annotated with (i) the duplicated and forged region masks, and (ii) the tampering factor/similarity metric. For benchmarking, forgery quality is evaluated using (i) computer vision-based methods, and (ii) human detection performance.
+
+    Directory structure:
+    COVERAGE
+    ├── image
+    │   ├── 1.tif
+    │   ├── 1t.tif
+    │   ├── ...
+    │   ├── 100.tif
+    │   └── 100t.tif
+    ├── label
+    │   ├── ...  # Not implemented.
+    ├── mask
+    │   ├── 1copy.tif
+    │   ├── 1forged.tif
+    │   ├── 1paste.tif
+    │   ├── ...
+    │   ├── 100copy.tif
+    │   ├── 100forged.tif
+    │   └── 100paste.tif
+    └── readme.txt
+
+    Args:
+        data_dir (str): The directory of the dataset.
+        mask_type (str): The type of mask to use. Must be 'forged', 'copy', or 'paste'.
+        image_transform (callable): The transform to be applied on the image.
+        mask_transform (callable): The transform to be applied on the mask.
+    '''
+
     def __init__(
         self,
         data_dir: str,
+        mask_type: str = 'forged',
         image_transform=None,
         mask_transform=None,
-        mask_type='forged',
     ) -> None:
         super().__init__()
 
