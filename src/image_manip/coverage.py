@@ -56,7 +56,9 @@ class Coverage(Dataset):
 
         if download:
             raise NotImplementedError(
-                'Downloading is not implemented yet due to the requirement of a browser to obtain the dataset. Please refer to the following link for more information: https://github.com/wenbihan/coverage.'
+                'Downloading is not implemented yet due to the requirement of a '
+                'browser to obtain the dataset. Please refer to the following link '
+                'for more information: https://github.com/wenbihan/coverage.'
             )
 
         # Fetch the image filenames.

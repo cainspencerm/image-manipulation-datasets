@@ -51,7 +51,9 @@ class Casia2(Dataset):
 
         if download:
             raise NotImplementedError(
-                'Downloading is not implemented yet due to the requirement of a browser to obtain the dataset. Please refer to the following link for more information: https://github.com/namtpham/casia2groundtruth.'
+                'Downloading is not implemented yet due to the requirement of a '
+                'browser to obtain the dataset. Please refer to the following link '
+                'for more information: https://github.com/namtpham/casia2groundtruth.'
             )
 
         # Fetch the image filenames.
