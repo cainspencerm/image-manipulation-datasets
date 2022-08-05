@@ -8,17 +8,33 @@ from typing import Tuple
 
 class Coverage(Dataset):
     def __init__(
-        self, data_dir: str, image_transform=None, mask_transform=None
+        self,
+        data_dir: str,
+        image_transform=None,
+        mask_transform=None,
+        mask_type='forged',
     ) -> None:
         super().__init__()
+
+        assert mask_type in ['forged', 'copy', 'paste']
 
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'image')
         self._input_files = [f for f in os.listdir(self._image_dir) if '.tif' in f]
 
-        # Fetch the mask filenames.
+        # Fetch the mask filenames in the correct order.
         self._mask_dir = os.path.join(data_dir, 'mask')
-        self._output_files = [f for f in os.listdir(self._mask_dir) if '.tif' in f]
+        mask_files = [f for f in os.listdir(self._mask_dir) if '.tif' in f]
+        self._output_files = []
+        for f in self._input_files:
+            f_name = f.split('.')[0]
+            if f_name[-1] == 't':
+                mask_file = f_name[:-1] + mask_type + '.tif'
+                assert mask_file in mask_files
+            else:
+                mask_file = None
+
+            self._output_files.append(mask_file)
 
         # Create transform callables for raw images and masks.
         if image_transform is None:
@@ -52,8 +68,11 @@ class Coverage(Dataset):
 
         # Load the mask.
         mask_file = self._output_files[idx]
-        mask = Image.open(os.path.join(self._mask_dir, mask_file))
-        mask = self._mask_transform(mask)
+        if mask_file is None:
+            mask = torch.zeros_like(image)
+        else:
+            mask = Image.open(os.path.join(self._mask_dir, mask_file))
+            mask = self._mask_transform(mask)
 
         return image, mask
 
