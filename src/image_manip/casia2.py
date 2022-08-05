@@ -3,33 +3,44 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
+from typing import Tuple
 
 
 class Casia2(Dataset):
-    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None) -> None:
+    def __init__(
+        self,
+        data_dir: str,
+        split: str = 'full',
+        image_transform=None,
+        mask_transform=None,
+    ) -> None:
         super().__init__()
 
         # Fetch the image filenames.
         self._authentic_dir = os.path.join(data_dir, 'Au')
-        auth_files = [f for f in os.listdir(self._authentic_dir) if '.tif' in f or '.jpg' in f]
+        auth_files = [
+            f for f in os.listdir(self._authentic_dir) if '.tif' in f or '.jpg' in f
+        ]
         auth_split_size = len(auth_files) // 10
 
         self._tampered_dir = os.path.join(data_dir, 'Tp')
-        tamp_files = [f for f in os.listdir(self._tampered_dir) if '.tif' in f or '.jpg' in f]
+        tamp_files = [
+            f for f in os.listdir(self._tampered_dir) if '.tif' in f or '.jpg' in f
+        ]
         tamp_split_size = len(tamp_files) // 10
 
         # Split the filenames into use cases.
         if split == 'train':
-            self._input_files = auth_files[:auth_split_size * 8]
-            self._input_files += tamp_files[:tamp_split_size * 8]
+            self._input_files = auth_files[: auth_split_size * 8]
+            self._input_files += tamp_files[: tamp_split_size * 8]
 
         elif split == 'valid':
             self._input_files = auth_files[auth_split_size * 8 : auth_split_size * 9]
             self._input_files += tamp_files[tamp_split_size * 8 : tamp_split_size * 9]
 
         elif split == 'test':
-            self._input_files = auth_files[auth_split_size * 9:]
-            self._input_files += tamp_files[tamp_split_size * 9:]
+            self._input_files = auth_files[auth_split_size * 9 :]
+            self._input_files += tamp_files[tamp_split_size * 9 :]
 
         elif split == 'benchmark':
             self._input_files = auth_files[:500]
@@ -43,29 +54,37 @@ class Casia2(Dataset):
 
         # Fetch the ground truth filenames.
         self._ground_truth_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
-        self._output_files = [f for f in os.listdir(self._ground_truth_dir) if f.endswith('.tif') or f.endswith('.jpg') or f.endswith('.png')]
+        self._output_files = [
+            f
+            for f in os.listdir(self._ground_truth_dir)
+            if f.endswith('.tif') or f.endswith('.jpg') or f.endswith('.png')
+        ]
 
         # Create transform callables for raw images and masks.
         if image_transform is None:
-            self._image_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._image_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
 
         else:
             self._image_transform = image_transform
 
         if mask_transform is None:
-            self._mask_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._mask_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
         else:
             self._mask_transform = mask_transform
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
 
         file = self._input_files[idx]
 
@@ -111,3 +130,25 @@ class Casia2(Dataset):
 
     def __len__(self):
         return len(self._input_files)
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='CASIA2 dataset loader')
+    parser.add_argument(
+        '--data-dir',
+        type=str,
+        required=True,
+        help='Path to the CASIA2 dataset directory.',
+    )
+    args = parser.parse_args()
+
+    dataset = Casia2(data_dir=args.data_dir, split='benchmark')
+    image, mask = dataset[0]
+    print('Sample:', image.size(), mask.size())
+    print('Number of samples:', len(dataset))
+
+
+if __name__ == '__main__':
+    main()

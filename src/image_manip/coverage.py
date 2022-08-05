@@ -3,10 +3,13 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
+from typing import Tuple
 
 
 class Coverage(Dataset):
-    def __init__(self, data_dir: str='data', image_transform=None, mask_transform=None):
+    def __init__(
+        self, data_dir: str, image_transform=None, mask_transform=None
+    ) -> None:
         super().__init__()
 
         # Fetch the image filenames.
@@ -19,25 +22,29 @@ class Coverage(Dataset):
 
         # Create transform callables for raw images and masks.
         if image_transform is None:
-            self._image_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._image_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
 
         else:
             self._image_transform = image_transform
 
         if mask_transform is None:
-            self._mask_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._mask_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
         else:
             self._mask_transform = mask_transform
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         # Load the image.
         image_file = self._input_files[idx]
         image = Image.open(os.path.join(self._image_dir, image_file))
@@ -50,14 +57,27 @@ class Coverage(Dataset):
 
         return image, mask
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._input_files)
 
 
 def main():
-    dataset = Coverage(data_dir='coverage')
+    import argparse
+
+    parser = argparse.ArgumentParser(description='COVERAGE dataset loader')
+    parser.add_argument(
+        '--data-dir',
+        type=str,
+        required=True,
+        help='Path to the COVERAGE dataset directory.',
+    )
+    args = parser.parse_args()
+
+    dataset = Coverage(data_dir=args.data_dir)
     image, mask = dataset[0]
-    print(image.size(), mask.size())
+    print('Sample:', image.size(), mask.size())
+    print('Number of samples:', len(dataset))
+
 
 if __name__ == '__main__':
     main()

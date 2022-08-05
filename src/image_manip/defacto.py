@@ -3,31 +3,53 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
+from typing import Tuple
 
 
 class Splicing(Dataset):
-    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None):
+    def __init__(
+        self,
+        data_dir: str,
+        split: str = 'full',
+        image_transform=None,
+        mask_transform=None,
+    ) -> None:
         super().__init__()
 
         # Fetch the image filenames.
-        self._image_dirs = [os.path.join(data_dir, f'splicing_{i}_img', 'img') for i in range(1, 8)]
-        image_files = [os.path.join(shard, f) for shard in self._image_dirs for f in os.listdir(shard) if '.tif' in f]
+        self._image_dirs = [
+            os.path.join(data_dir, f'splicing_{i}_img', 'img') for i in range(1, 8)
+        ]
+        image_files = [
+            os.path.join(shard, f)
+            for shard in self._image_dirs
+            for f in os.listdir(shard)
+            if '.tif' in f
+        ]
 
         # Fetch the mask filenames.
-        self._mask_dirs = [os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask') for i in range(1, 8)]
-        mask_files = [os.path.join(shard, f) for shard in self._mask_dirs for f in os.listdir(shard) if '.jpg' in f]
+        self._mask_dirs = [
+            os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask')
+            for i in range(1, 8)
+        ]
+        mask_files = [
+            os.path.join(shard, f)
+            for shard in self._mask_dirs
+            for f in os.listdir(shard)
+            if '.jpg' in f
+        ]
 
         split_size = len(image_files) // 10
 
         # Note that the order of the output files is aligned with the input files.
         if split == 'train':
-            self._input_files = image_files[:split_size * 8]
+            self._input_files = image_files[: split_size * 8]
 
         elif split == 'valid':
             self._input_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
-            self._input_files = image_files[split_size * 9:]
+            self._input_files = image_files[split_size * 9 :]
 
         elif split == 'benchmark':
             self._input_files = image_files[:1000]
@@ -50,25 +72,29 @@ class Splicing(Dataset):
 
         # Create transform callables for raw images and masks.
         if image_transform is None:
-            self._image_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._image_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
 
         else:
             self._image_transform = image_transform
 
         if mask_transform is None:
-            self._mask_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._mask_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
         else:
             self._mask_transform = mask_transform
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
         image = Image.open(image_file)
         image = self._image_transform(image)
@@ -79,12 +105,18 @@ class Splicing(Dataset):
 
         return image, mask
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._input_files)
 
 
 class CopyMove(Dataset):
-    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None):
+    def __init__(
+        self,
+        data_dir: str,
+        split: str = 'full',
+        image_transform=None,
+        mask_transform=None,
+    ) -> None:
         super().__init__()
 
         # Fetch the image filenames.
@@ -99,13 +131,13 @@ class CopyMove(Dataset):
 
         # Note that the order of the output files is aligned with the input files.
         if split == 'train':
-            self._input_files = image_files[:split_size * 8]
+            self._input_files = image_files[: split_size * 8]
 
         elif split == 'valid':
             self._input_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
-            self._input_files = image_files[split_size * 9:]
+            self._input_files = image_files[split_size * 9 :]
 
         elif split == 'benchmark':
             self._input_files = image_files[:1000]
@@ -125,25 +157,29 @@ class CopyMove(Dataset):
 
         # Create transform callables for raw images and masks.
         if image_transform is None:
-            self._image_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._image_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
 
         else:
             self._image_transform = image_transform
 
         if mask_transform is None:
-            self._mask_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._mask_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
         else:
             self._mask_transform = mask_transform
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
         image = Image.open(os.path.join(self._image_dir, image_file))
         image = self._image_transform(image)
@@ -154,12 +190,18 @@ class CopyMove(Dataset):
 
         return image, mask
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._input_files)
 
 
 class Inpainting(Dataset):
-    def __init__(self, data_dir: str, split: str='full', image_transform=None, mask_transform=None):
+    def __init__(
+        self,
+        data_dir: str,
+        split: str = 'full',
+        image_transform=None,
+        mask_transform=None,
+    ) -> None:
         super().__init__()
 
         # Fetch the image filenames.
@@ -174,13 +216,13 @@ class Inpainting(Dataset):
 
         # Note that the order of the output files is aligned with the input files.
         if split == 'train':
-            self._input_files = image_files[:split_size * 8]
+            self._input_files = image_files[: split_size * 8]
 
         elif split == 'valid':
             self._input_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
-            self._input_files = image_files[split_size * 9:]
+            self._input_files = image_files[split_size * 9 :]
 
         elif split == 'benchmark':
             self._input_files = image_files[:1000]
@@ -200,25 +242,29 @@ class Inpainting(Dataset):
 
         # Create transform callables for raw images and masks.
         if image_transform is None:
-            self._image_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._image_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
 
         else:
             self._image_transform = image_transform
 
         if mask_transform is None:
-            self._mask_transform = transforms.Compose([
-                transforms.Resize([256, 256]),
-                transforms.PILToTensor(),
-                transforms.ConvertImageDtype(torch.float),
-            ])
+            self._mask_transform = transforms.Compose(
+                [
+                    transforms.Resize([256, 256]),
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float),
+                ]
+            )
         else:
             self._mask_transform = mask_transform
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
         image = Image.open(os.path.join(self._image_dir, image_file))
         image = self._image_transform(image)
@@ -229,5 +275,59 @@ class Inpainting(Dataset):
 
         return image, mask
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._input_files)
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Defacto dataset loader')
+    parser.add_argument(
+        '--copy-move-data-dir',
+        type=str,
+        default=None,
+        help='Path to the CopyMove dataset directory.',
+    )
+    parser.add_argument(
+        '--inpainting-data-dir',
+        type=str,
+        default=None,
+        help='Path to the Inpainting dataset directory.',
+    )
+    parser.add_argument(
+        '--splicing-data-dir',
+        type=str,
+        default=None,
+        help='Path to the Splicing dataset directory.',
+    )
+    args = parser.parse_args()
+
+    if (
+        args.copy_move_data_dir is None
+        and args.inpainting_data_dir is None
+        and args.splicing_data_dir is None
+    ):
+        parser.error('At least one dataset directory must be specified.')
+
+    if args.copy_move_data_dir is not None:
+        dataset = CopyMove(data_dir=args.copy_move_data_dir, split='benchmark')
+        image, mask = dataset[0]
+        print('Sample:', image.size(), mask.size())
+        print('Number of samples:', len(dataset))
+
+    if args.inpainting_data_dir is not None:
+        dataset = Inpainting(data_dir=args.inpainting_data_dir, split='benchmark')
+        image, mask = dataset[0]
+        print('Samples:', image.size(), mask.size())
+        print('Number of samples:', len(dataset))
+
+    if args.splicing_data_dir is not None:
+        dataset = Splicing(data_dir=args.splicing_data_dir, split='benchmark')
+        image, mask = dataset[0]
+        print('Samples:', image.size(), mask.size())
+        print('Number of samples:', len(dataset))
+
+
+if __name__ == '__main__':
+    main()

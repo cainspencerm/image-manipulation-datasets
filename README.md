@@ -61,17 +61,3 @@ from image_manip import coverage
 
 dataset = coverage.Coverage(data_dir='data/coverage')
 ```
-
-### Testing
-
-To test the directory configurations:
-```python
-from torch.utils.data import DataLoader
-
-# Create dataloader from dataset.
-full_loader = DataLoader(dataset, batch_size=8, shuffle=True)
-
-for image, mask in full_loader:
-    print(image.size(), mask.size())
-    break
-```
