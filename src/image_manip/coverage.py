@@ -1,9 +1,11 @@
 import torch
-from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
-from typing import Tuple, Callable
+from typing import Tuple
+import numpy as np
+
+import utils
 
 
 class Coverage(Dataset):
@@ -37,8 +39,9 @@ class Coverage(Dataset):
     Args:
         data_dir (str): The directory of the dataset.
         mask_type (str): The type of mask to use. Must be 'forged', 'copy', or 'paste'.
-        image_transform (callable): The transform to be applied on the image.
-        mask_transform (callable): The transform to be applied on the mask.
+        crop_size (tuple): The size of the crop to be applied on the image and mask.
+        pixel_range (tuple): The range of the pixel values of the input images.
+            Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
     '''
 
@@ -46,8 +49,8 @@ class Coverage(Dataset):
         self,
         data_dir: str,
         mask_type: str = 'forged',
-        image_transform: Callable = None,
-        mask_transform: Callable = None,
+        crop_size: Tuple[int, int] = (256, 256),
+        pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
         super().__init__()
@@ -79,43 +82,53 @@ class Coverage(Dataset):
 
             self._output_files.append(mask_file)
 
-        # Create transform callables for raw images and masks.
-        if image_transform is None:
-            self._image_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-
-        else:
-            self._image_transform = image_transform
-
-        if mask_transform is None:
-            self._mask_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-        else:
-            self._mask_transform = mask_transform
+        self.crop_size = crop_size
+        self.pixel_range = pixel_range
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         # Load the image.
         image_file = self._input_files[idx]
         image = Image.open(os.path.join(self._image_dir, image_file))
-        image = self._image_transform(image)
+
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+
+        minimum, maximum = self.pixel_range
 
         # Load the mask.
         mask_file = self._output_files[idx]
+
         if mask_file is None:
-            mask = torch.zeros_like(image)
+            mask = torch.zeros(self.crop_size).unsqueeze(dim=0)
+
+            # Crop or pad the image.
+            image = np.array(image) * (maximum - minimum) / 255.0 + minimum
+            image = utils.crop_or_pad(image, self.crop_size, pad_value=maximum)
+
+            image = torch.from_numpy(image).permute(2, 0, 1)
+
         else:
             mask = Image.open(os.path.join(self._mask_dir, mask_file))
-            mask = self._mask_transform(mask)
+
+            if mask.mode != 'L':
+                mask = mask.convert('L')
+
+            # Resize the mask to match the image.
+            mask = mask.resize(image.size)
+
+            image, mask = (
+                np.array(image) * (maximum - minimum) / 255.0 + minimum,
+                np.array(mask) / 255.0,
+            )
+
+            # Crop or pad the image and mask.
+            image, mask = utils.crop_or_pad(
+                [image, mask], self.crop_size, pad_value=[maximum, 1.0]
+            )
+
+            image, mask = torch.from_numpy(image).permute(2, 0, 1), torch.from_numpy(
+                mask
+            ).permute(2, 0, 1)
 
         return image, mask
 
@@ -136,8 +149,9 @@ def main():
     args = parser.parse_args()
 
     dataset = Coverage(data_dir=args.data_dir)
-    image, mask = dataset[0]
-    print('Sample:', image.size(), mask.size())
+    for image, mask in dataset:
+        print('Sample:', image.size(), mask.size())
+        break
     print('Number of samples:', len(dataset))
 
 

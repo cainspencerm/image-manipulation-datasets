@@ -1,9 +1,11 @@
 import torch
-from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
-from typing import Tuple, Callable
+from typing import Tuple
+import numpy as np
+
+import utils
 
 
 class Casia2(Dataset):
@@ -34,8 +36,9 @@ class Casia2(Dataset):
         data_dir (str): The directory of the dataset.
         split (str): The split of the dataset. Must be 'train', 'valid', 'test',
             'benchmark', or 'full'.
-        image_transform (callable): The transform to be applied on the image.
-        mask_transform (callable): The transform to be applied on the mask.
+        crop_size (tuple): The size of the crop to be applied on the image and mask.
+        pixel_range (tuple): The range of the pixel values of the input images.
+            Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
     '''
 
@@ -43,8 +46,8 @@ class Casia2(Dataset):
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform: Callable = None,
-        mask_transform: Callable = None,
+        crop_size: Tuple[int, int] = (256, 256),
+        pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
         super().__init__()
@@ -59,13 +62,17 @@ class Casia2(Dataset):
         # Fetch the image filenames.
         self._authentic_dir = os.path.join(data_dir, 'Au')
         auth_files = [
-            f for f in os.listdir(self._authentic_dir) if '.tif' in f or '.jpg' in f
+            os.path.join(self._authentic_dir, f)
+            for f in os.listdir(self._authentic_dir)
+            if '.tif' in f or '.jpg' in f
         ]
         auth_split_size = len(auth_files) // 10
 
         self._tampered_dir = os.path.join(data_dir, 'Tp')
         tamp_files = [
-            f for f in os.listdir(self._tampered_dir) if '.tif' in f or '.jpg' in f
+            os.path.join(self._tampered_dir, f)
+            for f in os.listdir(self._tampered_dir)
+            if '.tif' in f or '.jpg' in f
         ]
         tamp_split_size = len(tamp_files) // 10
 
@@ -92,79 +99,88 @@ class Casia2(Dataset):
         else:
             raise ValueError('Unknown split: ' + split)
 
-        # Fetch the ground truth filenames.
-        self._ground_truth_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
-        self._output_files = [
+        # Ignore these files that have no ground truth masks.
+        corrupted_files = [
+            'Tp/Tp_D_NRD_S_N_cha10002_cha10001_20094.jpg',
+            'Tp/Tp_S_NRD_S_N_arc20079_arc20079_01719.tif',
+        ]
+
+        for f in corrupted_files:
+            self._input_files.remove(os.path.join(data_dir, f))
+
+        # Fetch the mask filenames.
+        self._mask_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
+        mask_files = [
             f
-            for f in os.listdir(self._ground_truth_dir)
+            for f in os.listdir(self._mask_dir)
             if f.endswith('.tif') or f.endswith('.jpg') or f.endswith('.png')
         ]
 
-        # Create transform callables for raw images and masks.
-        if image_transform is None:
-            self._image_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
+        # Sort the output files based on the input files.
+        self._output_files = []
+        for file in self._input_files:
+            tamp_id = file[-9:-4]
+            mask = None
+            for f in mask_files:
+                if tamp_id + '_gt' == f[-12:-4]:
+                    mask = f
+                    break
 
-        else:
-            self._image_transform = image_transform
+            if mask is None and file.startswith('Tp'):
+                raise ValueError('No ground truth file found for image: ' + file)
 
-        if mask_transform is None:
-            self._mask_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-        else:
-            self._mask_transform = mask_transform
+            mask_file = os.path.join(self._mask_dir, mask) if mask is not None else None
+            self._output_files.append(mask_file)
+
+        self.crop_size = crop_size
+        self.pixel_range = pixel_range
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        file = self._input_files[idx]
+        minimum, maximum = self.pixel_range
 
-        if file.startswith('Au'):
-            # Load the image.
-            image = Image.open(os.path.join(self._authentic_dir, file))
+        # Load the image.
+        image_file = self._input_files[idx]
+        image = Image.open(image_file)
 
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
 
-            image = self._image_transform(image)
+        # Load the mask.
+        mask_file = self._output_files[idx]
+
+        if mask_file is None:
+            image = np.array(image) * (maximum - minimum) / 255.0 + minimum
+            image = utils.crop_or_pad(image, self.crop_size, pad_value=maximum)
+            image = torch.from_numpy(image).permute(2, 0, 1)
 
             # An authentic image has no manipulation mask.
             mask = torch.zeros(size=[1] + list(image.size()[1:]))
 
-        elif file.startswith('Tp'):
-            # Load the image.
-            image = Image.open(os.path.join(self._tampered_dir, file))
-            image = self._image_transform(image)
-
-            # Find the corresponding ground truth file.
-            tamp_id = file[-9:-4]
-            gt_file = None
-            for f in self._output_files:
-                if tamp_id + '_gt' == f[-12:-4]:
-                    gt_file = f
-                    break
-
-            if gt_file is None:
-                raise ValueError('No ground truth file found for image: ' + file)
-
+        else:
             # Load the ground truth mask.
-            mask = Image.open(os.path.join(self._ground_truth_dir, gt_file))
+            mask = Image.open(mask_file)
+
+            # Resize the mask to match the image.
+            mask = mask.resize(image.size)
 
             if mask.mode != 'L':
                 mask = mask.convert('L')
 
-            mask = self._mask_transform(mask)
+            image, mask = (
+                np.array(image) * (maximum - minimum) / 255.0 + minimum,
+                np.array(mask) / 255.0,
+            )
 
-        image = image[:3]
+            # Crop or pad the image and mask.
+            image, mask = utils.crop_or_pad(
+                [image, mask], self.crop_size, pad_value=[maximum, 1.0]
+            )
+            image, mask = torch.from_numpy(image).permute(2, 0, 1), torch.from_numpy(
+                mask
+            ).permute(2, 0, 1)
+
+            image = image[:3]  # Remove the alpha channel if necessary.
 
         return image, mask
 
@@ -185,8 +201,9 @@ def main():
     args = parser.parse_args()
 
     dataset = Casia2(data_dir=args.data_dir, split='benchmark')
-    image, mask = dataset[0]
-    print('Sample:', image.size(), mask.size())
+    for image, mask in dataset:
+        print('Sample:', image.size(), mask.size())
+        break
     print('Number of samples:', len(dataset))
 
 
