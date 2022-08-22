@@ -1,9 +1,11 @@
 import torch
-from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 from PIL import Image
-from typing import Tuple, Callable
+from typing import Tuple
+import numpy as np
+
+import utils
 
 
 class Splicing(Dataset):
@@ -27,6 +29,13 @@ class Splicing(Dataset):
 
     To download the dataset, please visit the following link:
     https://defactodataset.github.io
+
+    Note: The dataset has an issue between the image and probe mask sizes. We must be
+    careful in how the images and masks are handled. Since the images have manipulation
+    statistics embedded in the pixels, any sort of aggregation function could damage or
+    destroy the statistics. Therefore, we need to resize the masks to match the images.
+    Then we need to crop the images and masks to the provided crop size. This will
+    preserve any manipulation statistics while removing issues in the dataset.
 
     Directory structure:
     Defacto Splicing
@@ -80,8 +89,9 @@ class Splicing(Dataset):
         data_dir (str): The directory of the dataset.
         split (str): The split of the dataset. Can be one of 'train', 'valid', 'test',
             'benchmark', and 'full'.
-        image_transform (callable): The transform to be applied on the image.
-        mask_transform (callable): The transform to be applied on the mask.
+        crop_size (tuple): The size of the crop to be applied on the image and mask.
+        pixel_range (tuple): The range of the pixel values of the input images.
+            Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
     '''
 
@@ -89,8 +99,8 @@ class Splicing(Dataset):
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform: Callable = None,
-        mask_transform: Callable = None,
+        crop_size: Tuple[int, int] = (256, 256),
+        pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
         super().__init__()
@@ -111,18 +121,6 @@ class Splicing(Dataset):
             for shard in self._image_dirs
             for f in os.listdir(shard)
             if '.tif' in f
-        ]
-
-        # Fetch the mask filenames.
-        self._mask_dirs = [
-            os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask')
-            for i in range(1, 8)
-        ]
-        mask_files = [
-            os.path.join(shard, f)
-            for shard in self._mask_dirs
-            for f in os.listdir(shard)
-            if '.jpg' in f
         ]
 
         split_size = len(image_files) // 10
@@ -146,50 +144,61 @@ class Splicing(Dataset):
         else:
             raise ValueError(f'Unknown split: {split}')
 
-        # Fetch the ground truth filenames.
+        # Fetch the mask files.
+        self._mask_dirs = [
+            os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask')
+            for i in range(1, 8)
+        ]
+
         self._output_files = []
         for f in self._input_files:
-            if_id = f.split('.')[0].split('_')[-1]
-            for mask_file in mask_files:
-                if if_id + '.jpg' in mask_file:
-                    self._output_files.append(mask_file)
-                    break
-            assert self._output_files[-1] == mask_file
+            shard = f.split('/')[-3].split('_')[-2]
+            f = f.replace('.tif', '.jpg').split('/')[-1]
+            self._output_files.append(os.path.join(self._mask_dirs[int(shard) - 1], f))
 
-        # Create transform callables for raw images and masks.
-        if image_transform is None:
-            self._image_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-
-        else:
-            self._image_transform = image_transform
-
-        if mask_transform is None:
-            self._mask_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-        else:
-            self._mask_transform = mask_transform
+        self.crop_size = crop_size
+        self.pixel_range = pixel_range
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
         image = Image.open(image_file)
-        image = self._image_transform(image)
+
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
 
         mask_file = self._output_files[idx]
         mask = Image.open(mask_file)
-        mask = self._mask_transform(mask)
 
-        return image, mask
+        if mask.mode != 'L':
+            mask = mask.convert('L')
+
+        # Resize the mask to match the image.
+        mask = mask.resize(image.size[:2])
+
+        new_mask_name = os.path.join('new_masks', '/'.join(mask_file.split('/')[-3:]))
+        new_mask_dir = os.path.dirname(new_mask_name)
+        os.makedirs(new_mask_dir, exist_ok=True)
+        mask.save(new_mask_name)
+
+        # Normalize the image and mask.
+        minimum, maximum = self.pixel_range
+        image, mask = (
+            np.array(image) * (maximum - minimum) / 255.0 + minimum,
+            np.array(mask) / 255.0,
+        )
+
+        # Convert partially mixed pixel labels to manipulated pixel labels.
+        mask = (mask > 0.0).astype(float)
+
+        # Crop or pad the image and mask.
+        image, mask = utils.crop_or_pad(
+            [image, mask], self.crop_size, pad_value=[maximum, 1.0]
+        )
+
+        image, mask = torch.from_numpy(image), torch.from_numpy(mask)
+        image, mask = torch.permute(image, (2, 0, 1)), torch.permute(mask, (2, 0, 1))
+
+        return image.float() / 255.0, mask.float() / 255.0
 
     def __len__(self) -> int:
         return len(self._input_files)
@@ -215,6 +224,13 @@ class CopyMove(Dataset):
 
     To download the dataset, please visit the following link:
     https://defactodataset.github.io
+
+    Note: The dataset has an issue between the image and probe mask sizes. We must be
+    careful in how the images and masks are handled. Since the images have manipulation
+    statistics embedded in the pixels, any sort of aggregation function could damage or
+    destroy the statistics. Therefore, we need to resize the masks to match the images.
+    Then we need to crop the images and masks to the provided crop size. This will
+    preserve any manipulation statistics while removing issues in the dataset.
 
     Directory structure:
     Defacto CopyMove
@@ -245,8 +261,9 @@ class CopyMove(Dataset):
         data_dir (str): The directory of the dataset.
         split (str): The split of the dataset. Can be one of 'train', 'valid', 'test',
             'benchmark', and 'full'.
-        image_transform (callable): The transform to be applied on the image.
-        mask_transform (callable): The transform to be applied on the mask.
+        crop_size (tuple): The size of the crops.
+        pixel_range (tuple): The range of the pixel values of the input images.
+            Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
     '''
 
@@ -254,8 +271,8 @@ class CopyMove(Dataset):
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform: Callable = None,
-        mask_transform: Callable = None,
+        crop_size: Tuple[int, int] = (256, 256),
+        pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
         super().__init__()
@@ -270,10 +287,6 @@ class CopyMove(Dataset):
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'copymove_img', 'img')
         image_files = [f for f in os.listdir(self._image_dir) if f.endswith('.tif')]
-
-        # Fetch the mask filenames.
-        self._mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
-        mask_files = [f for f in os.listdir(self._mask_dir) if f.endswith('.jpg')]
 
         split_size = len(image_files) // 10
 
@@ -296,47 +309,52 @@ class CopyMove(Dataset):
         else:
             raise ValueError(f'Unknown split: {split}')
 
-        # Fetch the ground truth filenames.
+        # Fetch the mask files.
+        self._mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
+
         self._output_files = []
         for f in self._input_files:
-            if_id = f.split('.')[0]
-            idx = mask_files.index(if_id + '.jpg')
-            self._output_files.append(mask_files[idx])
+            f = f.replace('.tif', '.jpg').split('/')[-1]
+            self._output_files.append(os.path.join(self._mask_dir, f))
 
-        # Create transform callables for raw images and masks.
-        if image_transform is None:
-            self._image_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-
-        else:
-            self._image_transform = image_transform
-
-        if mask_transform is None:
-            self._mask_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-        else:
-            self._mask_transform = mask_transform
+        self.crop_size = crop_size
+        self.pixel_range = pixel_range
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
         image = Image.open(os.path.join(self._image_dir, image_file))
-        image = self._image_transform(image)
+
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
 
         mask_file = self._output_files[idx]
         mask = Image.open(os.path.join(self._mask_dir, mask_file))
-        mask = self._mask_transform(mask)
 
-        return image, mask
+        if mask.mode != 'L':
+            mask = mask.convert('L')
+
+        # Resize the mask to match the image.
+        mask = mask.resize(image.size[:2])
+
+        # Normalize the image and mask.
+        minimum, maximum = self.pixel_range
+        image, mask = (
+            np.array(image) * (maximum - minimum) / 255.0 + minimum,
+            np.array(mask) / 255.0,
+        )
+
+        # Convert partially mixed pixel labels to manipulated pixel labels.
+        mask = (mask > 0.0).astype(float)
+
+        # Crop or pad the image and mask.
+        image, mask = utils.crop_or_pad(
+            [image, mask], self.crop_size, pad_value=[maximum, 1.0]
+        )
+
+        image, mask = torch.from_numpy(image), torch.from_numpy(mask)
+        image, mask = torch.permute(image, (2, 0, 1)), torch.permute(mask, (2, 0, 1))
+
+        return image.float() / 255.0, mask.float() / 255.0
 
     def __len__(self) -> int:
         return len(self._input_files)
@@ -362,6 +380,13 @@ class Inpainting(Dataset):
 
     To download the dataset, please visit the following link:
     https://defactodataset.github.io
+
+    Note: The dataset has an issue between the image and probe mask sizes. We must be
+    careful in how the images and masks are handled. Since the images have manipulation
+    statistics embedded in the pixels, any sort of aggregation function could damage or
+    destroy the statistics. Therefore, we need to resize the masks to match the images.
+    Then we need to crop the images and masks to the provided crop size. This will
+    preserve any manipulation statistics while removing issues in the dataset.
 
     Directory structure:
     Defacto Inpainting
@@ -392,8 +417,9 @@ class Inpainting(Dataset):
         data_dir (str): The directory of the dataset.
         split (str): The split of the dataset. Must be 'train', 'valid', 'test',
             'benchmark', or 'full'.
-        image_transform (callable): The transform to be applied on the image.
-        mask_transform (callable): The transform to be applied on the mask.
+        crop_size (tuple): The size of the crops.
+        pixel_range (tuple): The range of the pixel values of the input images.
+            Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
     '''
 
@@ -401,8 +427,8 @@ class Inpainting(Dataset):
         self,
         data_dir: str,
         split: str = 'full',
-        image_transform: Callable = None,
-        mask_transform: Callable = None,
+        crop_size: Tuple[int, int] = (256, 256),
+        pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
         super().__init__()
@@ -417,10 +443,6 @@ class Inpainting(Dataset):
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'inpainting_img', 'img')
         image_files = [f for f in os.listdir(self._image_dir) if f.endswith('.tif')]
-
-        # Fetch the ground truth filenames.
-        self._mask_dir = os.path.join(data_dir, 'inpainting_annotations', 'probe_mask')
-        mask_files = [f for f in os.listdir(self._mask_dir) if f.endswith('.tif')]
 
         split_size = len(image_files) // 10
 
@@ -443,45 +465,50 @@ class Inpainting(Dataset):
         else:
             raise ValueError(f'Unknown split: {split}')
 
-        # Fetch the ground truth filenames.
+        # Fetch the mask files.
+        self._mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
+
         self._output_files = []
         for f in self._input_files:
-            if_id = f.split('.')[0]
-            idx = mask_files.index(if_id + '.tif')
-            self._output_files.append(mask_files[idx])
+            f = f.replace('.tif', '.jpg').split('/')[-1]
+            self._output_files.append(os.path.join(self._mask_dir, f))
 
-        # Create transform callables for raw images and masks.
-        if image_transform is None:
-            self._image_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-
-        else:
-            self._image_transform = image_transform
-
-        if mask_transform is None:
-            self._mask_transform = transforms.Compose(
-                [
-                    transforms.Resize([256, 256]),
-                    transforms.PILToTensor(),
-                    transforms.ConvertImageDtype(torch.float),
-                ]
-            )
-        else:
-            self._mask_transform = mask_transform
+        self.crop_size = crop_size
+        self.pixel_range = pixel_range
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
         image = Image.open(os.path.join(self._image_dir, image_file))
-        image = self._image_transform(image)
+
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
 
         mask_file = self._output_files[idx]
         mask = Image.open(os.path.join(self._mask_dir, mask_file))
-        mask = self._mask_transform(mask)
+
+        if mask.mode != 'L':
+            mask = mask.convert('L')
+
+        # Resize the mask to match the image.
+        mask = mask.resize(image.size[:2])
+
+        # Normalize the image and mask.
+        minimum, maximum = self.pixel_range
+        image, mask = (
+            np.array(image) * (maximum - minimum) / 255.0 + minimum,
+            np.array(mask) / 255.0,
+        )
+
+        # Convert partially mixed pixel labels to manipulated pixel labels.
+        mask = (mask > 0.0).astype(float)
+
+        # Crop or pad the image and mask.
+        image, mask = utils.crop_or_pad(
+            [image, mask], self.crop_size, pad_value=[maximum, 1.0]
+        )
+
+        image, mask = torch.from_numpy(image), torch.from_numpy(mask)
+        image, mask = torch.permute(image, (2, 0, 1)), torch.permute(mask, (2, 0, 1))
 
         return image, mask
 
@@ -522,20 +549,23 @@ def main():
 
     if args.copy_move_data_dir is not None:
         dataset = CopyMove(data_dir=args.copy_move_data_dir, split='benchmark')
-        image, mask = dataset[0]
-        print('Sample:', image.size(), mask.size())
+        for image, mask in dataset:
+            print('Sample:', image.size(), mask.size())
+            break
         print('Number of samples:', len(dataset))
 
     if args.inpainting_data_dir is not None:
         dataset = Inpainting(data_dir=args.inpainting_data_dir, split='benchmark')
-        image, mask = dataset[0]
-        print('Samples:', image.size(), mask.size())
+        for image, mask in dataset:
+            print('Sample:', image.size(), mask.size())
+            break
         print('Number of samples:', len(dataset))
 
     if args.splicing_data_dir is not None:
         dataset = Splicing(data_dir=args.splicing_data_dir, split='benchmark')
-        image, mask = dataset[0]
-        print('Samples:', image.size(), mask.size())
+        for image, mask in dataset:
+            print('Sample:', image.size(), mask.size())
+            break
         print('Number of samples:', len(dataset))
 
 

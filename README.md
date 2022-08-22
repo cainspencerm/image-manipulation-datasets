@@ -51,7 +51,7 @@ dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train',
 ```python
 from image_manip import defacto
 
-datatset = defacto.Inpainting(data_dir='data/inpainting') # optional split=['train', 'val', 'test', 'benchmark', 'full']
+datatset = defacto.Inpainting(data_dir='data/inpainting')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ### Coverage
@@ -61,3 +61,7 @@ from image_manip import coverage
 
 dataset = coverage.Coverage(data_dir='data/coverage')
 ```
+
+## Sample Quality
+
+Datasets are not always perfect. Of the available datasets, COVERAGE, CASIA 2, and Defacto Splicing had images and masks that didn't match in size, though they have been verified as pairs. For this reason, the dataset classes resize the masks to the size of the original image, with the hopes that the masks line up correctly with the image. This is unverified as it would require manually verifying each of the over 110,000 image and mask pairs.
