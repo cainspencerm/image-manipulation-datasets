@@ -5,7 +5,7 @@ from PIL import Image
 from typing import Tuple
 import numpy as np
 
-import utils
+from image_manip import utils
 
 
 class Coverage(Dataset):
