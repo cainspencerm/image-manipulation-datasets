@@ -192,10 +192,12 @@ class Splicing(Dataset):
             [image, mask], self.crop_size, pad_value=[maximum, 1.0]
         )
 
-        image, mask = torch.from_numpy(image), torch.from_numpy(mask)
-        image, mask = torch.permute(image, (2, 0, 1)), torch.permute(mask, (2, 0, 1))
+        image, mask = (
+            torch.from_numpy(image).permute(2, 0, 1),
+            torch.from_numpy(mask).permute(2, 0, 1),
+        )
 
-        return image.float() / 255.0, mask.float() / 255.0
+        return image, mask
 
     def __len__(self) -> int:
         return len(self._input_files)
@@ -355,7 +357,7 @@ class CopyMove(Dataset):
         image, mask = torch.from_numpy(image), torch.from_numpy(mask)
         image, mask = torch.permute(image, (2, 0, 1)), torch.permute(mask, (2, 0, 1))
 
-        return image.float() / 255.0, mask.float() / 255.0
+        return image, mask
 
     def __len__(self) -> int:
         return len(self._input_files)
