@@ -66,16 +66,25 @@ class Coverage(Dataset):
 
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'image')
-        self._input_files = [f for f in os.listdir(self._image_dir) if '.tif' in f]
+        self._input_files = [
+            os.path.abspath(os.path.join(self._image_dir, f))
+            for f in os.listdir(self._image_dir)
+            if '.tif' in f
+        ]
 
         # Fetch the mask filenames in the correct order.
-        self._mask_dir = os.path.join(data_dir, 'mask')
-        mask_files = [f for f in os.listdir(self._mask_dir) if '.tif' in f]
+        self._mask_dir = os.path.abspath(os.path.join(data_dir, 'mask'))
+        mask_files = [
+            os.path.abspath(os.path.join(self._mask_dir, f))
+            for f in os.listdir(self._mask_dir)
+            if '.tif' in f
+        ]
         self._output_files = []
         for f in self._input_files:
             f_name = f.split('.')[0]
             if f_name[-1] == 't':
-                mask_file = f_name[:-1] + mask_type + '.tif'
+                mask_file = f_name.split('/')[-1][:-1] + mask_type + '.tif'
+                mask_file = os.path.abspath(os.path.join(self._mask_dir, mask_file))
                 assert mask_file in mask_files
             else:
                 mask_file = None
@@ -88,7 +97,7 @@ class Coverage(Dataset):
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         # Load the image.
         image_file = self._input_files[idx]
-        image = Image.open(os.path.join(self._image_dir, image_file))
+        image = Image.open(image_file)
 
         if image.mode != 'RGB':
             image = image.convert('RGB')
@@ -108,7 +117,7 @@ class Coverage(Dataset):
             image = torch.from_numpy(image).permute(2, 0, 1)
 
         else:
-            mask = Image.open(os.path.join(self._mask_dir, mask_file))
+            mask = Image.open(mask_file)
 
             if mask.mode != 'L':
                 mask = mask.convert('L')

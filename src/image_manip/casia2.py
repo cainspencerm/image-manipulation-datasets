@@ -62,7 +62,7 @@ class Casia2(Dataset):
         # Fetch the image filenames.
         self._authentic_dir = os.path.join(data_dir, 'Au')
         auth_files = [
-            os.path.join(self._authentic_dir, f)
+            os.path.abspath(os.path.join(self._authentic_dir, f))
             for f in os.listdir(self._authentic_dir)
             if '.tif' in f or '.jpg' in f
         ]
@@ -70,7 +70,7 @@ class Casia2(Dataset):
 
         self._tampered_dir = os.path.join(data_dir, 'Tp')
         tamp_files = [
-            os.path.join(self._tampered_dir, f)
+            os.path.abspath(os.path.join(self._tampered_dir, f))
             for f in os.listdir(self._tampered_dir)
             if '.tif' in f or '.jpg' in f
         ]
@@ -105,8 +105,14 @@ class Casia2(Dataset):
             'Tp/Tp_S_NRD_S_N_arc20079_arc20079_01719.tif',
         ]
 
-        for f in corrupted_files:
-            self._input_files.remove(os.path.join(data_dir, f))
+        remove_files = []
+        for file in self._input_files:
+            for f in corrupted_files:
+                if f in file:
+                    remove_files.append(file)
+
+        for file in remove_files:
+            self._input_files.remove(file)
 
         # Fetch the mask filenames.
         self._mask_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
@@ -126,10 +132,14 @@ class Casia2(Dataset):
                     mask = f
                     break
 
-            if mask is None and file.startswith('Tp'):
+            if mask is None and file.split('/')[-2] == 'Tp':
                 raise ValueError('No ground truth file found for image: ' + file)
 
-            mask_file = os.path.join(self._mask_dir, mask) if mask is not None else None
+            mask_file = (
+                os.path.abspath(os.path.join(self._mask_dir, mask))
+                if mask is not None
+                else None
+            )
             self._output_files.append(mask_file)
 
         self.crop_size = crop_size

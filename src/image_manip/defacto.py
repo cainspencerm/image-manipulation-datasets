@@ -117,7 +117,7 @@ class Splicing(Dataset):
             os.path.join(data_dir, f'splicing_{i}_img', 'img') for i in range(1, 8)
         ]
         image_files = [
-            os.path.join(shard, f)
+            os.path.abspath(os.path.join(shard, f))
             for shard in self._image_dirs
             for f in os.listdir(shard)
             if '.tif' in f
@@ -154,7 +154,9 @@ class Splicing(Dataset):
         for f in self._input_files:
             shard = f.split('/')[-3].split('_')[-2]
             f = f.replace('.tif', '.jpg').split('/')[-1]
-            self._output_files.append(os.path.join(self._mask_dirs[int(shard) - 1], f))
+            self._output_files.append(
+                os.path.abspath(os.path.join(self._mask_dirs[int(shard) - 1], f))
+            )
 
         self.crop_size = crop_size
         self.pixel_range = pixel_range
@@ -174,11 +176,6 @@ class Splicing(Dataset):
 
         # Resize the mask to match the image.
         mask = mask.resize(image.size[:2])
-
-        new_mask_name = os.path.join('new_masks', '/'.join(mask_file.split('/')[-3:]))
-        new_mask_dir = os.path.dirname(new_mask_name)
-        os.makedirs(new_mask_dir, exist_ok=True)
-        mask.save(new_mask_name)
 
         # Normalize the image and mask.
         minimum, maximum = self.pixel_range
@@ -286,7 +283,11 @@ class CopyMove(Dataset):
 
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'copymove_img', 'img')
-        image_files = [f for f in os.listdir(self._image_dir) if f.endswith('.tif')]
+        image_files = [
+            os.path.abspath(os.path.join(self._image_dir, f))
+            for f in os.listdir(self._image_dir)
+            if f.endswith('.tif')
+        ]
 
         split_size = len(image_files) // 10
 
@@ -322,13 +323,13 @@ class CopyMove(Dataset):
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
-        image = Image.open(os.path.join(self._image_dir, image_file))
+        image = Image.open(image_file)
 
         if image.mode != 'RGB':
             image = image.convert('RGB')
 
         mask_file = self._output_files[idx]
-        mask = Image.open(os.path.join(self._mask_dir, mask_file))
+        mask = Image.open(mask_file)
 
         if mask.mode != 'L':
             mask = mask.convert('L')
@@ -442,7 +443,11 @@ class Inpainting(Dataset):
 
         # Fetch the image filenames.
         self._image_dir = os.path.join(data_dir, 'inpainting_img', 'img')
-        image_files = [f for f in os.listdir(self._image_dir) if f.endswith('.tif')]
+        image_files = [
+            os.path.abspath(os.path.join(self._image_dir, f))
+            for f in os.listdir(self._image_dir)
+            if f.endswith('.tif')
+        ]
 
         split_size = len(image_files) // 10
 
@@ -466,25 +471,25 @@ class Inpainting(Dataset):
             raise ValueError(f'Unknown split: {split}')
 
         # Fetch the mask files.
-        self._mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
+        self._mask_dir = os.path.join(data_dir, 'inpainting_annotations', 'probe_mask')
 
         self._output_files = []
         for f in self._input_files:
-            f = f.replace('.tif', '.jpg').split('/')[-1]
-            self._output_files.append(os.path.join(self._mask_dir, f))
+            f = f.split('/')[-1]
+            self._output_files.append(os.path.abspath(os.path.join(self._mask_dir, f)))
 
         self.crop_size = crop_size
         self.pixel_range = pixel_range
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         image_file = self._input_files[idx]
-        image = Image.open(os.path.join(self._image_dir, image_file))
+        image = Image.open(image_file)
 
         if image.mode != 'RGB':
             image = image.convert('RGB')
 
         mask_file = self._output_files[idx]
-        mask = Image.open(os.path.join(self._mask_dir, mask_file))
+        mask = Image.open(mask_file)
 
         if mask.mode != 'L':
             mask = mask.convert('L')
