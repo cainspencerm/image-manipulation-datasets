@@ -1,14 +1,11 @@
-import torch
-from torch.utils.data import Dataset
 import os
-from PIL import Image
 from typing import Tuple
 import numpy as np
 
-from image_manip import utils
+import base
 
 
-class Splicing(Dataset):
+class Splicing(base._BaseDataset):
     '''Digital image forensic has gained a lot of attention as it is becoming easier
     for anyone to make forged images. Several areas are concerned by image
     manipulation: a doctored image can increase the credibility of fake news, impostors
@@ -92,6 +89,7 @@ class Splicing(Dataset):
         crop_size (tuple): The size of the crop to be applied on the image and mask.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
+        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -101,9 +99,10 @@ class Splicing(Dataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = (256, 256),
         pixel_range: Tuple[float, float] = (0.0, 1.0),
+        shuffle: bool = True,
         download: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -113,97 +112,56 @@ class Splicing(Dataset):
             )
 
         # Fetch the image filenames.
-        self._image_dirs = [
+        image_dirs = [
             os.path.join(data_dir, f'splicing_{i}_img', 'img') for i in range(1, 8)
         ]
         image_files = [
             os.path.abspath(os.path.join(shard, f))
-            for shard in self._image_dirs
+            for shard in image_dirs
             for f in os.listdir(shard)
             if '.tif' in f
         ]
 
+        # Shuffle the image files for a random split.
+        if shuffle:
+            image_files = np.random.permutation(image_files).tolist()
+
         split_size = len(image_files) // 10
 
-        # Note that the order of the output files is aligned with the input files.
         if split == 'train':
-            self._input_files = image_files[: split_size * 8]
+            self.image_files = image_files[: split_size * 8]
 
         elif split == 'valid':
-            self._input_files = image_files[split_size * 8 : split_size * 9]
+            self.image_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
-            self._input_files = image_files[split_size * 9 :]
+            self.image_files = image_files[split_size * 9 :]
 
         elif split == 'benchmark':
-            self._input_files = image_files[:1000]
+            self.image_files = image_files[:1000]
 
         elif split == 'full':
-            self._input_files = image_files
+            self.image_files = image_files
 
         else:
             raise ValueError(f'Unknown split: {split}')
 
         # Fetch the mask files.
-        self._mask_dirs = [
+        mask_dirs = [
             os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask')
             for i in range(1, 8)
         ]
 
-        self._output_files = []
-        for f in self._input_files:
+        self.mask_files = []
+        for f in self.image_files:
             shard = f.split('/')[-3].split('_')[-2]
-            f = f.replace('.tif', '.jpg').split('/')[-1]
-            self._output_files.append(
-                os.path.abspath(os.path.join(self._mask_dirs[int(shard) - 1], f))
+            f = f.split('/')[-1].replace('.tif', '.jpg')
+            self.mask_files.append(
+                os.path.abspath(os.path.join(mask_dirs[int(shard) - 1], f))
             )
 
-        self.crop_size = crop_size
-        self.pixel_range = pixel_range
 
-    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
-        image_file = self._input_files[idx]
-        image = Image.open(image_file)
-
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-
-        mask_file = self._output_files[idx]
-        mask = Image.open(mask_file)
-
-        if mask.mode != 'L':
-            mask = mask.convert('L')
-
-        # Resize the mask to match the image.
-        mask = mask.resize(image.size[:2])
-
-        # Normalize the image and mask.
-        minimum, maximum = self.pixel_range
-        image, mask = (
-            np.array(image) * (maximum - minimum) / 255.0 + minimum,
-            np.array(mask) / 255.0,
-        )
-
-        # Convert partially mixed pixel labels to manipulated pixel labels.
-        mask = (mask > 0.0).astype(float)
-
-        # Crop or pad the image and mask.
-        image, mask = utils.crop_or_pad(
-            [image, mask], self.crop_size, pad_value=[maximum, 1.0]
-        )
-
-        image, mask = (
-            torch.from_numpy(image).permute(2, 0, 1),
-            torch.from_numpy(mask).permute(2, 0, 1),
-        )
-
-        return image, mask
-
-    def __len__(self) -> int:
-        return len(self._input_files)
-
-
-class CopyMove(Dataset):
+class CopyMove(base._BaseDataset):
     '''Digital image forensic has gained a lot of attention as it is becoming easier
     for anyone to make forged images. Several areas are concerned by image
     manipulation: a doctored image can increase the credibility of fake news, impostors
@@ -263,6 +221,7 @@ class CopyMove(Dataset):
         crop_size (tuple): The size of the crops.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
+        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -272,9 +231,10 @@ class CopyMove(Dataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = (256, 256),
         pixel_range: Tuple[float, float] = (0.0, 1.0),
+        shuffle: bool = True,
         download: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -284,86 +244,48 @@ class CopyMove(Dataset):
             )
 
         # Fetch the image filenames.
-        self._image_dir = os.path.join(data_dir, 'copymove_img', 'img')
+        image_dir = os.path.join(data_dir, 'copymove_img', 'img')
         image_files = [
-            os.path.abspath(os.path.join(self._image_dir, f))
-            for f in os.listdir(self._image_dir)
+            os.path.abspath(os.path.join(image_dir, f))
+            for f in os.listdir(image_dir)
             if f.endswith('.tif')
         ]
+
+        # Shuffle the image files for a random split.
+        if shuffle:
+            image_files = np.random.permutation(image_files).tolist()
 
         split_size = len(image_files) // 10
 
         # Note that the order of the output files is aligned with the input files.
         if split == 'train':
-            self._input_files = image_files[: split_size * 8]
+            self.image_files = image_files[: split_size * 8]
 
         elif split == 'valid':
-            self._input_files = image_files[split_size * 8 : split_size * 9]
+            self.image_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
-            self._input_files = image_files[split_size * 9 :]
+            self.image_files = image_files[split_size * 9 :]
 
         elif split == 'benchmark':
-            self._input_files = image_files[:1000]
+            self.image_files = image_files[:1000]
 
         elif split == 'full':
-            self._input_files = image_files
+            self.image_files = image_files
 
         else:
             raise ValueError(f'Unknown split: {split}')
 
         # Fetch the mask files.
-        self._mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
+        mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
 
-        self._output_files = []
-        for f in self._input_files:
-            f = f.replace('.tif', '.jpg').split('/')[-1]
-            self._output_files.append(os.path.join(self._mask_dir, f))
-
-        self.crop_size = crop_size
-        self.pixel_range = pixel_range
-
-    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
-        image_file = self._input_files[idx]
-        image = Image.open(image_file)
-
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-
-        mask_file = self._output_files[idx]
-        mask = Image.open(mask_file)
-
-        if mask.mode != 'L':
-            mask = mask.convert('L')
-
-        # Resize the mask to match the image.
-        mask = mask.resize(image.size[:2])
-
-        # Normalize the image and mask.
-        minimum, maximum = self.pixel_range
-        image, mask = (
-            np.array(image) * (maximum - minimum) / 255.0 + minimum,
-            np.array(mask) / 255.0,
-        )
-
-        # Convert partially mixed pixel labels to manipulated pixel labels.
-        mask = (mask > 0.0).astype(float)
-
-        # Crop or pad the image and mask.
-        image, mask = utils.crop_or_pad(
-            [image, mask], self.crop_size, pad_value=[maximum, 1.0]
-        )
-
-        image, mask = torch.from_numpy(image), torch.from_numpy(mask)
-        image, mask = torch.permute(image, (2, 0, 1)), torch.permute(mask, (2, 0, 1))
-
-        return image, mask
-
-    def __len__(self) -> int:
-        return len(self._input_files)
+        self.mask_files = []
+        for f in self.image_files:
+            f = f.split('/')[-1].replace('.tif', '.jpg')
+            self.mask_files.append(os.path.join(mask_dir, f))
 
 
-class Inpainting(Dataset):
+class Inpainting(base._BaseDataset):
     '''Digital image forensic has gained a lot of attention as it is becoming easier
     for anyone to make forged images. Several areas are concerned by image
     manipulation: a doctored image can increase the credibility of fake news, impostors
@@ -423,6 +345,7 @@ class Inpainting(Dataset):
         crop_size (tuple): The size of the crops.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
+        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -432,9 +355,10 @@ class Inpainting(Dataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = (256, 256),
         pixel_range: Tuple[float, float] = (0.0, 1.0),
+        shuffle: bool = True,
         download: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -444,83 +368,45 @@ class Inpainting(Dataset):
             )
 
         # Fetch the image filenames.
-        self._image_dir = os.path.join(data_dir, 'inpainting_img', 'img')
+        image_dir = os.path.join(data_dir, 'inpainting_img', 'img')
         image_files = [
-            os.path.abspath(os.path.join(self._image_dir, f))
-            for f in os.listdir(self._image_dir)
+            os.path.abspath(os.path.join(image_dir, f))
+            for f in os.listdir(image_dir)
             if f.endswith('.tif')
         ]
+
+        # Shuffle the image files for a random split.
+        if shuffle:
+            image_files = np.random.permutation(image_files).tolist()
 
         split_size = len(image_files) // 10
 
         # Note that the order of the output files is aligned with the input files.
         if split == 'train':
-            self._input_files = image_files[: split_size * 8]
+            self.image_files = image_files[: split_size * 8]
 
         elif split == 'valid':
-            self._input_files = image_files[split_size * 8 : split_size * 9]
+            self.image_files = image_files[split_size * 8 : split_size * 9]
 
         elif split == 'test':
-            self._input_files = image_files[split_size * 9 :]
+            self.image_files = image_files[split_size * 9 :]
 
         elif split == 'benchmark':
-            self._input_files = image_files[:1000]
+            self.image_files = image_files[:1000]
 
         elif split == 'full':
-            self._input_files = image_files
+            self.image_files = image_files
 
         else:
             raise ValueError(f'Unknown split: {split}')
 
         # Fetch the mask files.
-        self._mask_dir = os.path.join(data_dir, 'inpainting_annotations', 'probe_mask')
+        mask_dir = os.path.join(data_dir, 'inpainting_annotations', 'probe_mask')
 
-        self._output_files = []
-        for f in self._input_files:
+        self.mask_files = []
+        for f in self.image_files:
             f = f.split('/')[-1]
-            self._output_files.append(os.path.abspath(os.path.join(self._mask_dir, f)))
-
-        self.crop_size = crop_size
-        self.pixel_range = pixel_range
-
-    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
-        image_file = self._input_files[idx]
-        image = Image.open(image_file)
-
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-
-        mask_file = self._output_files[idx]
-        mask = Image.open(mask_file)
-
-        if mask.mode != 'L':
-            mask = mask.convert('L')
-
-        # Resize the mask to match the image.
-        mask = mask.resize(image.size[:2])
-
-        # Normalize the image and mask.
-        minimum, maximum = self.pixel_range
-        image, mask = (
-            np.array(image) * (maximum - minimum) / 255.0 + minimum,
-            np.array(mask) / 255.0,
-        )
-
-        # Convert partially mixed pixel labels to manipulated pixel labels.
-        mask = (mask > 0.0).astype(float)
-
-        # Crop or pad the image and mask.
-        image, mask = utils.crop_or_pad(
-            [image, mask], self.crop_size, pad_value=[maximum, 1.0]
-        )
-
-        image, mask = torch.from_numpy(image), torch.from_numpy(mask)
-        image, mask = torch.permute(image, (2, 0, 1)), torch.permute(mask, (2, 0, 1))
-
-        return image, mask
-
-    def __len__(self) -> int:
-        return len(self._input_files)
+            self.mask_files.append(os.path.abspath(os.path.join(mask_dir, f)))
 
 
 def main():
@@ -554,6 +440,13 @@ def main():
     ):
         parser.error('At least one dataset directory must be specified.')
 
+    if args.splicing_data_dir is not None:
+        dataset = Splicing(data_dir=args.splicing_data_dir, split='benchmark')
+        for image, mask in dataset:
+            print('Sample:', image.size(), mask.size())
+            break
+        print('Number of samples:', len(dataset))
+
     if args.copy_move_data_dir is not None:
         dataset = CopyMove(data_dir=args.copy_move_data_dir, split='benchmark')
         for image, mask in dataset:
@@ -563,13 +456,6 @@ def main():
 
     if args.inpainting_data_dir is not None:
         dataset = Inpainting(data_dir=args.inpainting_data_dir, split='benchmark')
-        for image, mask in dataset:
-            print('Sample:', image.size(), mask.size())
-            break
-        print('Number of samples:', len(dataset))
-
-    if args.splicing_data_dir is not None:
-        dataset = Splicing(data_dir=args.splicing_data_dir, split='benchmark')
         for image, mask in dataset:
             print('Sample:', image.size(), mask.size())
             break
