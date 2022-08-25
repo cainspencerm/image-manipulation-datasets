@@ -155,10 +155,14 @@ class Splicing(base._BaseDataset):
         self.mask_files = []
         for f in self.image_files:
             shard = f.split('/')[-3].split('_')[-2]
-            f = f.split('/')[-1].replace('.tif', '.jpg')
-            self.mask_files.append(
-                os.path.abspath(os.path.join(mask_dirs[int(shard) - 1], f))
-            )
+            f = f.split('/')[-1]
+            mask_file = os.path.abspath(os.path.join(mask_dirs[int(shard) - 1], f))
+            if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
+                self.mask_files.append(mask_file.replace('.jpg', '.tif'))
+            elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
+                self.mask_files.append(mask_file.replace('.tif', '.jpg'))
+            else:
+                self.mask_files.append(mask_file)
 
 
 class CopyMove(base._BaseDataset):
@@ -281,8 +285,14 @@ class CopyMove(base._BaseDataset):
 
         self.mask_files = []
         for f in self.image_files:
-            f = f.split('/')[-1].replace('.tif', '.jpg')
-            self.mask_files.append(os.path.join(mask_dir, f))
+            f = f.split('/')[-1]
+            mask_file = os.path.abspath(os.path.join(mask_dir, f))
+            if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
+                self.mask_files.append(mask_file.replace('.jpg', '.tif'))
+            elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
+                self.mask_files.append(mask_file.replace('.tif', '.jpg'))
+            else:
+                self.mask_files.append(mask_file)
 
 
 class Inpainting(base._BaseDataset):
@@ -406,7 +416,13 @@ class Inpainting(base._BaseDataset):
         self.mask_files = []
         for f in self.image_files:
             f = f.split('/')[-1]
-            self.mask_files.append(os.path.abspath(os.path.join(mask_dir, f)))
+            mask_file = os.path.abspath(os.path.join(mask_dir, f))
+            if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
+                self.mask_files.append(mask_file.replace('.jpg', '.tif'))
+            elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
+                self.mask_files.append(mask_file.replace('.tif', '.jpg'))
+            else:
+                self.mask_files.append(mask_file)
 
 
 def main():
