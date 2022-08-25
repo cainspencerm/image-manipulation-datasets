@@ -68,7 +68,7 @@ class Coverage(base._BaseDataset):
         self.image_files = [
             os.path.abspath(os.path.join(image_dir, f))
             for f in os.listdir(image_dir)
-            if '.tif' in f
+            if f.endswith('tif') or f.endswith('jpg')
         ]
 
         # Shuffle the image files for a random split.

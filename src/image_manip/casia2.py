@@ -63,7 +63,7 @@ class Casia2(base._BaseDataset):
         auth_files = [
             os.path.abspath(os.path.join(authentic_dir, f))
             for f in os.listdir(authentic_dir)
-            if '.tif' in f or '.jpg' in f
+            if f.endswith('tif') or f.endswith('jpg')
         ]
         auth_split_size = len(auth_files) // 10
 
@@ -71,7 +71,7 @@ class Casia2(base._BaseDataset):
         tamp_files = [
             os.path.abspath(os.path.join(tampered_dir, f))
             for f in os.listdir(tampered_dir)
-            if '.tif' in f or '.jpg' in f
+            if f.endswith('tif') or f.endswith('jpg')
         ]
         tamp_split_size = len(tamp_files) // 10
 

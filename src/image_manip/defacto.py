@@ -119,7 +119,7 @@ class Splicing(base._BaseDataset):
             os.path.abspath(os.path.join(shard, f))
             for shard in image_dirs
             for f in os.listdir(shard)
-            if '.tif' in f
+            if f.endswith('tif') or f.endswith('jpg')
         ]
 
         # Shuffle the image files for a random split.
@@ -248,7 +248,7 @@ class CopyMove(base._BaseDataset):
         image_files = [
             os.path.abspath(os.path.join(image_dir, f))
             for f in os.listdir(image_dir)
-            if f.endswith('.tif')
+            if f.endswith('.tif') or f.endswith('.jpg')
         ]
 
         # Shuffle the image files for a random split.
@@ -372,7 +372,7 @@ class Inpainting(base._BaseDataset):
         image_files = [
             os.path.abspath(os.path.join(image_dir, f))
             for f in os.listdir(image_dir)
-            if f.endswith('.tif')
+            if f.endswith('.tif') or f.endswith('.jpg')
         ]
 
         # Shuffle the image files for a random split.
