@@ -44,7 +44,7 @@ class Casia2(base._BaseDataset):
         self,
         data_dir: str,
         split: str = 'full',
-        crop_size: Tuple[int, int] = (256, 256),
+        crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         shuffle: bool = True,
         download: bool = False,

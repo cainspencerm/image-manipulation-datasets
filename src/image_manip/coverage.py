@@ -47,7 +47,7 @@ class Coverage(base._BaseDataset):
         self,
         data_dir: str,
         mask_type: str = 'forged',
-        crop_size: Tuple[int, int] = (256, 256),
+        crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         shuffle: bool = True,
         download: bool = False,

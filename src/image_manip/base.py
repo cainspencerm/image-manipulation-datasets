@@ -10,8 +10,8 @@ from image_manip import utils
 class _BaseDataset(data.Dataset):
     def __init__(
         self,
-        crop_size: Tuple[int, int] = (256, 256),
-        pixel_range: Tuple[float, float] = (0.0, 1.0),
+        crop_size: Tuple[int, int],
+        pixel_range: Tuple[float, float],
     ):
         super().__init__()
 
@@ -45,7 +45,10 @@ class _BaseDataset(data.Dataset):
             image = np.array(image) * (pixel_max - pixel_min) / 255.0 + pixel_min
 
             # Crop or pad the image.
-            image = utils.crop_or_pad(image, self.crop_size, pad_value=pixel_max)
+            crop_size = (
+                self.crop_size if self.crop_size is not None else image.shape[:2]
+            )
+            image = utils.crop_or_pad(image, crop_size, pad_value=pixel_max)
 
             # Convert the image to a tensor.
             image = torch.from_numpy(image).permute(2, 0, 1)
@@ -70,8 +73,11 @@ class _BaseDataset(data.Dataset):
             mask = (mask > 0.0).astype(float)
 
             # Crop or pad the image and mask.
+            crop_size = (
+                self.crop_size if self.crop_size is not None else image.shape[:2]
+            )
             image, mask = utils.crop_or_pad(
-                [image, mask], self.crop_size, pad_value=[pixel_max, 1.0]
+                [image, mask], crop_size, pad_value=[pixel_max, 1.0]
             )
 
             # Convert the image and mask to tensors.
