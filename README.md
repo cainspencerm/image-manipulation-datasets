@@ -13,7 +13,7 @@ Currently, the supported datasets are:
 
 ## Install
 ```bash
-pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.5
+pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.6
 ```
 
 ## Examples
