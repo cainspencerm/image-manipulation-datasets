@@ -39,15 +39,13 @@ class _BaseDataset(data.Dataset):
         if mask_file is None:
 
             # The mask doesn't exist; assume it has no manipulated pixels.
-            mask = torch.zeros(self.crop_size).unsqueeze(dim=0)
+            crop_size = self.crop_size if self.crop_size is not None else image.size
+            mask = torch.zeros(crop_size).unsqueeze(dim=0)
 
             # Normalize the image.
             image = np.array(image) * (pixel_max - pixel_min) / 255.0 + pixel_min
 
             # Crop or pad the image.
-            crop_size = (
-                self.crop_size if self.crop_size is not None else image.shape[:2]
-            )
             image = utils.crop_or_pad(image, crop_size, pad_value=pixel_max)
 
             # Convert the image to a tensor.
