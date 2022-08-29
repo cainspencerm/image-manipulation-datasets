@@ -13,7 +13,7 @@ Currently, the supported datasets are:
 
 ## Install
 ```bash
-pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.5
+pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@0.6
 ```
 
 ## Examples
@@ -60,6 +60,14 @@ datatset = defacto.Inpainting(data_dir='data/inpainting')  # optional split=['tr
 from image_manip import coverage
 
 dataset = coverage.Coverage(data_dir='data/coverage')
+```
+
+### IMD2020
+
+```python
+from image_manip import imd2020
+
+dataset = imd2020.IMD2020(data_dir='data/imd2020')
 ```
 
 ## Sample Quality
