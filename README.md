@@ -59,7 +59,7 @@ datatset = defacto.Inpainting(data_dir='data/inpainting')  # optional split=['tr
 ```python
 from image_manip import coverage
 
-dataset = coverage.Coverage(data_dir='data/coverage')
+dataset = coverage.Coverage(data_dir='data/coverage')  # no optional split
 ```
 
 ### IMD2020
@@ -67,7 +67,7 @@ dataset = coverage.Coverage(data_dir='data/coverage')
 ```python
 from image_manip import imd2020
 
-dataset = imd2020.IMD2020(data_dir='data/imd2020')
+dataset = imd2020.IMD2020(data_dir='data/imd2020')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ## Sample Quality

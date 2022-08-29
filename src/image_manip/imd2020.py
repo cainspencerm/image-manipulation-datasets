@@ -33,6 +33,8 @@ class IMD2020(base._BaseDataset):
 
     Args:
         data_dir (str): The directory of the dataset.
+        split (str): The split of the dataset. Must be 'train', 'valid', 'test',
+            'benchmark', or 'full'.
         crop_size (tuple): The size of the crop to be applied on the image and mask.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
@@ -43,6 +45,7 @@ class IMD2020(base._BaseDataset):
     def __init__(
         self,
         data_dir: str,
+        split: str = 'full',
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         shuffle: bool = True,
@@ -92,7 +95,30 @@ class IMD2020(base._BaseDataset):
             image_files = np.array(image_files)[p].tolist()
             mask_files = np.array(mask_files)[p].tolist()
 
-        self.image_files, self.mask_files = image_files, mask_files
+        # Split the filenames into use cases.
+        split_size = len(image_files) // 10
+        if split == 'train':
+            self.image_files = image_files[: split_size * 8]
+            self.mask_files = mask_files[: split_size * 8]
+
+        elif split == 'valid':
+            self.image_files = image_files[split_size * 8 : split_size * 9]
+            self.mask_files = mask_files[split_size * 8 : split_size * 9]
+
+        elif split == 'test':
+            self.image_files = image_files[split_size * 9 :]
+            self.mask_files = mask_files[split_size * 9 :]
+
+        elif split == 'benchmark':
+            self.image_files = image_files[:500]
+            self.mask_files = mask_files[:500]
+
+        elif split == 'full':
+            self.image_files = image_files
+            self.mask_files = mask_files
+
+        else:
+            raise ValueError('Unknown split: ' + split)
 
 
 def main():
