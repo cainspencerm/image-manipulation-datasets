@@ -1,14 +1,11 @@
-import torch
-from torch.utils.data import Dataset
 import os
-from PIL import Image
 from typing import Tuple
 import numpy as np
 
-import utils
+from image_manip import base
 
 
-class Casia2(Dataset):
+class Casia2(base._BaseDataset):
     '''CASIA V2 is a dataset for forgery classification. It contains 4795 images, 1701 authentic and 3274 forged.
 
     To download the dataset, please visit the following link:
@@ -39,6 +36,7 @@ class Casia2(Dataset):
         crop_size (tuple): The size of the crop to be applied on the image and mask.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
+        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -46,11 +44,12 @@ class Casia2(Dataset):
         self,
         data_dir: str,
         split: str = 'full',
-        crop_size: Tuple[int, int] = (256, 256),
+        crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
+        shuffle: bool = True,
         download: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -60,41 +59,46 @@ class Casia2(Dataset):
             )
 
         # Fetch the image filenames.
-        self._authentic_dir = os.path.join(data_dir, 'Au')
+        authentic_dir = os.path.join(data_dir, 'Au')
         auth_files = [
-            os.path.join(self._authentic_dir, f)
-            for f in os.listdir(self._authentic_dir)
-            if '.tif' in f or '.jpg' in f
+            os.path.abspath(os.path.join(authentic_dir, f))
+            for f in os.listdir(authentic_dir)
+            if f.endswith('tif') or f.endswith('jpg')
         ]
         auth_split_size = len(auth_files) // 10
 
-        self._tampered_dir = os.path.join(data_dir, 'Tp')
+        tampered_dir = os.path.join(data_dir, 'Tp')
         tamp_files = [
-            os.path.join(self._tampered_dir, f)
-            for f in os.listdir(self._tampered_dir)
-            if '.tif' in f or '.jpg' in f
+            os.path.abspath(os.path.join(tampered_dir, f))
+            for f in os.listdir(tampered_dir)
+            if f.endswith('tif') or f.endswith('jpg')
         ]
         tamp_split_size = len(tamp_files) // 10
 
+        # Shuffle the image files for a random split.
+        if shuffle:
+            auth_files = np.random.permutation(auth_files).tolist()
+            tamp_files = np.random.permutation(tamp_files).tolist()
+
         # Split the filenames into use cases.
         if split == 'train':
-            self._input_files = auth_files[: auth_split_size * 8]
-            self._input_files += tamp_files[: tamp_split_size * 8]
+            self.image_files = auth_files[: auth_split_size * 8]
+            self.image_files += tamp_files[: tamp_split_size * 8]
 
         elif split == 'valid':
-            self._input_files = auth_files[auth_split_size * 8 : auth_split_size * 9]
-            self._input_files += tamp_files[tamp_split_size * 8 : tamp_split_size * 9]
+            self.image_files = auth_files[auth_split_size * 8 : auth_split_size * 9]
+            self.image_files += tamp_files[tamp_split_size * 8 : tamp_split_size * 9]
 
         elif split == 'test':
-            self._input_files = auth_files[auth_split_size * 9 :]
-            self._input_files += tamp_files[tamp_split_size * 9 :]
+            self.image_files = auth_files[auth_split_size * 9 :]
+            self.image_files += tamp_files[tamp_split_size * 9 :]
 
         elif split == 'benchmark':
-            self._input_files = auth_files[:500]
-            self._input_files += tamp_files[:500]
+            self.image_files = auth_files[:500]
+            self.image_files += tamp_files[:500]
 
         elif split == 'full':
-            self._input_files = auth_files + tamp_files
+            self.image_files = auth_files + tamp_files
 
         else:
             raise ValueError('Unknown split: ' + split)
@@ -105,20 +109,26 @@ class Casia2(Dataset):
             'Tp/Tp_S_NRD_S_N_arc20079_arc20079_01719.tif',
         ]
 
-        for f in corrupted_files:
-            self._input_files.remove(os.path.join(data_dir, f))
+        remove_files = []
+        for file in self.image_files:
+            for f in corrupted_files:
+                if f in file:
+                    remove_files.append(file)
+
+        for file in remove_files:
+            self.image_files.remove(file)
 
         # Fetch the mask filenames.
-        self._mask_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
+        mask_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
         mask_files = [
-            f
-            for f in os.listdir(self._mask_dir)
+            os.path.abspath(os.path.join(mask_dir, f))
+            for f in os.listdir(mask_dir)
             if f.endswith('.tif') or f.endswith('.jpg') or f.endswith('.png')
         ]
 
         # Sort the output files based on the input files.
-        self._output_files = []
-        for file in self._input_files:
+        self.mask_files = []
+        for file in self.image_files:
             tamp_id = file[-9:-4]
             mask = None
             for f in mask_files:
@@ -126,66 +136,15 @@ class Casia2(Dataset):
                     mask = f
                     break
 
-            if mask is None and file.startswith('Tp'):
+            if mask is None and file.split('/')[-2] == 'Tp':
                 raise ValueError('No ground truth file found for image: ' + file)
 
-            mask_file = os.path.join(self._mask_dir, mask) if mask is not None else None
-            self._output_files.append(mask_file)
-
-        self.crop_size = crop_size
-        self.pixel_range = pixel_range
-
-    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
-
-        minimum, maximum = self.pixel_range
-
-        # Load the image.
-        image_file = self._input_files[idx]
-        image = Image.open(image_file)
-
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-
-        # Load the mask.
-        mask_file = self._output_files[idx]
-
-        if mask_file is None:
-            image = np.array(image) * (maximum - minimum) / 255.0 + minimum
-            image = utils.crop_or_pad(image, self.crop_size, pad_value=maximum)
-            image = torch.from_numpy(image).permute(2, 0, 1)
-
-            # An authentic image has no manipulation mask.
-            mask = torch.zeros(size=[1] + list(image.size()[1:]))
-
-        else:
-            # Load the ground truth mask.
-            mask = Image.open(mask_file)
-
-            # Resize the mask to match the image.
-            mask = mask.resize(image.size)
-
-            if mask.mode != 'L':
-                mask = mask.convert('L')
-
-            image, mask = (
-                np.array(image) * (maximum - minimum) / 255.0 + minimum,
-                np.array(mask) / 255.0,
+            mask_file = (
+                os.path.abspath(os.path.join(mask_dir, mask))
+                if mask is not None
+                else None
             )
-
-            # Crop or pad the image and mask.
-            image, mask = utils.crop_or_pad(
-                [image, mask], self.crop_size, pad_value=[maximum, 1.0]
-            )
-            image, mask = torch.from_numpy(image).permute(2, 0, 1), torch.from_numpy(
-                mask
-            ).permute(2, 0, 1)
-
-            image = image[:3]  # Remove the alpha channel if necessary.
-
-        return image, mask
-
-    def __len__(self):
-        return len(self._input_files)
+            self.mask_files.append(mask_file)
 
 
 def main():

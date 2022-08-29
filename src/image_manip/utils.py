@@ -10,10 +10,12 @@ def crop_or_pad(
 ) -> Union[List[np.ndarray], np.ndarray]:
     """Crop or pad an array (or arrays) to a given shape. Note that if multiple arrays
     are passed, they must all have the same height and width.
-    :param arr: Array to crop or pad with format [B, H, W, C] or [H, W, C].
-    :param shape: Shape to crop or pad to with format [B, H, W] or [H, W].
-    :param pad_value: Value to use for padding.
-    :return: Cropped or padded array with format [B, H, W, C] or [H, W, C].
+    Args:
+        arr (list | np.ndarray): Array to crop or pad with format [B, H, W, C] or [H, W, C].
+        shape (tuple): Shape of the cropped or padded array with format [B, H, W, C] or [H, W, C].
+        pad_value (list | float): Value to use for padding.
+    Returns:
+        Cropped or padded array with format [B, H, W, C] or [H, W, C].
     """
     if isinstance(arr, list):
         arr_h, arr_w = arr[0].shape[:2]
