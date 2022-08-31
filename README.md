@@ -10,6 +10,7 @@ Currently, the supported datasets are:
     - Splicing
     - Inpainting
 - Coverage
+- IMD2020
 
 ## Install
 ```bash
@@ -23,51 +24,19 @@ pip install git+https://github.com/cainspencerm/image-manipulation-datasets.git@
 Ensure that the ground truth directory is in data_dir and named 'CASIA 2 Groundtruth'.
 
 ```python
-from image_manip import casia2
+import image_manip.datasets as imds
 
 # Create dataset object for dataloader.
-dataset = casia2.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
+dataset = imds.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ### Defacto Copy/Move
 
 ```python
-from image_manip import defacto
+import image_manip.datasets as imds
 
 # Create dataset object for dataloader.
-dataset = defacto.CopyMove(data_dir='data/copy-move')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
-```
-
-### Defacto Splicing
-
-```python
-from image_manip import defacto
-
-dataset = defacto.Splicing(data_dir='data/splicing')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
-```
-
-### Defacto Inpainting
-
-```python
-from image_manip import defacto
-
-datatset = defacto.Inpainting(data_dir='data/inpainting')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
-```
-
-### Coverage
-
-```python
-from image_manip import coverage
-
-dataset = coverage.Coverage(data_dir='data/coverage')  # no optional split
-```
-
-### IMD2020
-
-```python
-from image_manip import imd2020
-
-dataset = imd2020.IMD2020(data_dir='data/imd2020')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
+dataset = imds.CopyMove(data_dir='data/copy-move')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ## Sample Quality
