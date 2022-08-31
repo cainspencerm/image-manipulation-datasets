@@ -132,16 +132,13 @@ class _BaseDataset(data.Dataset):
             mask = torch.zeros(crop_size, dtype=self.data_type).unsqueeze(dim=0)
 
             # Normalize the image.
-            image = (
-                np.array(image, dtype=self.data_type) * (pixel_max - pixel_min) / 255.0
-                + pixel_min
-            )
+            image = np.array(image) * (pixel_max - pixel_min) / 255.0 + pixel_min
 
             # Crop or pad the image.
             image = crop_or_pad(image, crop_size, pad_value=pixel_max)
 
             # Convert the image to a tensor.
-            image = torch.from_numpy(image).permute(2, 0, 1)
+            image = torch.from_numpy(image).to(self.data_type).permute(2, 0, 1)
 
         else:
 
@@ -156,14 +153,11 @@ class _BaseDataset(data.Dataset):
             mask = mask.resize(image.size[:2])
 
             # Normalize the image and mask.
-            image = (
-                np.array(image, dtype=self.data_type) * (pixel_max - pixel_min) / 255.0
-                + pixel_min
-            )
-            mask = np.array(mask, dtype=self.data_type) / 255.0
+            image = np.array(image) * (pixel_max - pixel_min) / 255.0 + pixel_min
+            mask = np.array(mask) / 255.0
 
             # Convert partially mixed pixel labels to manipulated pixel labels.
-            mask = (mask > 0.0).astype(self.data_type)
+            mask = (mask > 0.0).astype(float)
 
             # Crop or pad the image and mask.
             crop_size = (
@@ -174,10 +168,9 @@ class _BaseDataset(data.Dataset):
             )
 
             # Convert the image and mask to tensors.
-            image = torch.from_numpy(image).permute(2, 0, 1)
-            mask = torch.from_numpy(mask).permute(2, 0, 1)
+            image = torch.from_numpy(image).to(self.data_type).permute(2, 0, 1)
+            mask = torch.from_numpy(mask).to(self.data_type).permute(2, 0, 1)
 
-        print(image.dtype, mask.dtype)
         return image, mask
 
     def __len__(self) -> int:
