@@ -267,7 +267,6 @@ class Splicing(_BaseDataset):
         crop_size (tuple): The size of the crop to be applied on the image and mask.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
-        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -277,7 +276,6 @@ class Splicing(_BaseDataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = (256, 256),
         pixel_range: Tuple[float, float] = (0.0, 1.0),
-        shuffle: bool = True,
         download: bool = False,
     ) -> None:
         super().__init__(crop_size, pixel_range)
@@ -300,9 +298,9 @@ class Splicing(_BaseDataset):
             if f.endswith('tif') or f.endswith('jpg')
         ]
 
-        # Shuffle the image files for a random split.
-        if shuffle:
-            image_files = np.random.permutation(image_files).tolist()
+        # Shuffle the image files for a deterministic random split.
+        np.random.seed(42)
+        image_files = np.random.permutation(image_files).tolist()
 
         split_size = len(image_files) // 10
 
@@ -403,7 +401,6 @@ class CopyMove(_BaseDataset):
         crop_size (tuple): The size of the crops.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
-        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -413,7 +410,6 @@ class CopyMove(_BaseDataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
-        shuffle: bool = True,
         download: bool = False,
     ) -> None:
         super().__init__(crop_size, pixel_range)
@@ -433,9 +429,9 @@ class CopyMove(_BaseDataset):
             if f.endswith('.tif') or f.endswith('.jpg')
         ]
 
-        # Shuffle the image files for a random split.
-        if shuffle:
-            image_files = np.random.permutation(image_files).tolist()
+        # Shuffle the image files for a deterministic random split.
+        np.random.seed(42)
+        image_files = np.random.permutation(image_files).tolist()
 
         split_size = len(image_files) // 10
 
@@ -533,7 +529,6 @@ class Inpainting(_BaseDataset):
         crop_size (tuple): The size of the crops.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
-        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -543,7 +538,6 @@ class Inpainting(_BaseDataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
-        shuffle: bool = True,
         download: bool = False,
     ) -> None:
         super().__init__(crop_size, pixel_range)
@@ -563,9 +557,9 @@ class Inpainting(_BaseDataset):
             if f.endswith('.tif') or f.endswith('.jpg')
         ]
 
-        # Shuffle the image files for a random split.
-        if shuffle:
-            image_files = np.random.permutation(image_files).tolist()
+        # Shuffle the image files for a deterministic random split.
+        np.random.seed(42)
+        image_files = np.random.permutation(image_files).tolist()
 
         split_size = len(image_files) // 10
 
@@ -634,7 +628,6 @@ class CASIA2(_BaseDataset):
         crop_size (tuple): The size of the crop to be applied on the image and mask.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
-        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -644,7 +637,6 @@ class CASIA2(_BaseDataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
-        shuffle: bool = True,
         download: bool = False,
     ) -> None:
         super().__init__(crop_size, pixel_range)
@@ -673,10 +665,10 @@ class CASIA2(_BaseDataset):
         ]
         tamp_split_size = len(tamp_files) // 10
 
-        # Shuffle the image files for a random split.
-        if shuffle:
-            auth_files = np.random.permutation(auth_files).tolist()
-            tamp_files = np.random.permutation(tamp_files).tolist()
+        # Shuffle the image files for a deterministic random split.
+        np.random.seed(42)
+        auth_files = np.random.permutation(auth_files).tolist()
+        tamp_files = np.random.permutation(tamp_files).tolist()
 
         # Split the filenames into use cases.
         if split == 'train':
@@ -787,7 +779,6 @@ class Coverage(_BaseDataset):
         crop_size (tuple): The size of the crop to be applied on the image and mask.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
-        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -797,7 +788,6 @@ class Coverage(_BaseDataset):
         mask_type: str = 'forged',
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
-        shuffle: bool = True,
         download: bool = False,
     ) -> None:
         super().__init__(crop_size, pixel_range)
@@ -819,9 +809,9 @@ class Coverage(_BaseDataset):
             if f.endswith('tif') or f.endswith('jpg')
         ]
 
-        # Shuffle the image files for a random split.
-        if shuffle:
-            self.image_files = np.random.permutation(self.image_files).tolist()
+        # Shuffle the image files for a deterministic random split.
+        np.random.seed(42)
+        self.image_files = np.random.permutation(self.image_files).tolist()
 
         # Fetch the mask filenames in the correct order.
         mask_dir = os.path.abspath(os.path.join(data_dir, 'mask'))
@@ -876,7 +866,6 @@ class IMD2020(_BaseDataset):
         crop_size (tuple): The size of the crop to be applied on the image and mask.
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
-        shuffle (bool): Whether to shuffle the dataset before splitting.
         download (bool): Whether to download the dataset.
     '''
 
@@ -886,7 +875,6 @@ class IMD2020(_BaseDataset):
         split: str = 'full',
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
-        shuffle: bool = True,
         download: bool = False,
     ) -> None:
         super().__init__(crop_size, pixel_range)
@@ -927,11 +915,11 @@ class IMD2020(_BaseDataset):
                             )
                     image_files.append(image_file)
 
-        # Shuffle the image files for a random split.
-        if shuffle:
-            p = np.random.permutation(np.arange(len(image_files)))
-            image_files = np.array(image_files)[p].tolist()
-            mask_files = np.array(mask_files)[p].tolist()
+        # Shuffle the image files for a deterministic random split.
+        np.random.seed(42)
+        p = np.random.permutation(len(image_files))
+        image_files = np.array(image_files)[p].tolist()
+        mask_files = np.array(mask_files)[p].tolist()
 
         # Split the filenames into use cases.
         split_size = len(image_files) // 10
