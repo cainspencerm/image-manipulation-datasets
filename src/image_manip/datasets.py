@@ -176,6 +176,12 @@ class _BaseDataset(data.Dataset):
     def __len__(self) -> int:
         return len(self.image_files)
 
+    def shuffle(self):
+        assert self.image_files is not None and self.mask_files is not None
+        p = np.random.permutation(len(self.image_files))
+        self.image_files = [self.image_files[i] for i in p]
+        self.mask_files = [self.mask_files[i] for i in p]
+
 
 class Splicing(_BaseDataset):
     '''Digital image forensic has gained a lot of attention as it is becoming easier
