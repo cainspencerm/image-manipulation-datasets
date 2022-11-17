@@ -294,7 +294,7 @@ class Splicing(_BaseDataset):
         image_files = [
             os.path.join(shard, f)
             for shard in image_dirs
-            for f in os.listdir(data_dir, shard)
+            for f in os.listdir(os.path.join(data_dir, shard))
             if f.endswith('tif') or f.endswith('jpg')
         ]
 
