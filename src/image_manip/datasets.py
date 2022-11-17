@@ -97,12 +97,14 @@ def _crop_or_pad(
 class _BaseDataset(data.Dataset):
     def __init__(
         self,
+        root_dir: str,
         crop_size: Tuple[int, int],
         pixel_range: Tuple[float, float],
         dtype: torch.dtype = torch.float32,
     ):
         super().__init__()
 
+        self.root_dir = root_dir
         self.crop_size = crop_size
         self.pixel_range = pixel_range
         self.data_type = dtype
@@ -114,7 +116,7 @@ class _BaseDataset(data.Dataset):
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
 
         # Load the image file.
-        image_file = self.image_files[idx]
+        image_file = os.path.join(self.root_dir, self.image_files[idx])
         image = Image.open(image_file)
 
         # Force three color channels.
@@ -122,10 +124,10 @@ class _BaseDataset(data.Dataset):
             image = image.convert('RGB')
 
         # Load the mask file.
-        mask_file = self.mask_files[idx]
+        mask_file = os.path.join(self.root_dir, self.mask_files[idx])
         pixel_min, pixel_max = self.pixel_range
 
-        if mask_file is None:
+        if self.mask_files[idx] is None:
 
             # The mask doesn't exist; assume it has no manipulated pixels.
             crop_size = self.crop_size if self.crop_size is not None else image.size
@@ -278,7 +280,7 @@ class Splicing(_BaseDataset):
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
-        super().__init__(crop_size, pixel_range)
+        super().__init__(data_dir, crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -288,9 +290,7 @@ class Splicing(_BaseDataset):
             )
 
         # Fetch the image filenames.
-        image_dirs = [
-            os.path.join(data_dir, f'splicing_{i}_img', 'img') for i in range(1, 8)
-        ]
+        image_dirs = [os.path.join(f'splicing_{i}_img', 'img') for i in range(1, 8)]
         image_files = [
             os.path.abspath(os.path.join(shard, f))
             for shard in image_dirs
@@ -324,8 +324,7 @@ class Splicing(_BaseDataset):
 
         # Fetch the mask files.
         mask_dirs = [
-            os.path.join(data_dir, f'splicing_{i}_annotations', 'probe_mask')
-            for i in range(1, 8)
+            os.path.join(f'splicing_{i}_annotations', 'probe_mask') for i in range(1, 8)
         ]
 
         self.mask_files = []
@@ -412,7 +411,7 @@ class CopyMove(_BaseDataset):
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
-        super().__init__(crop_size, pixel_range)
+        super().__init__(data_dir, crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -422,7 +421,7 @@ class CopyMove(_BaseDataset):
             )
 
         # Fetch the image filenames.
-        image_dir = os.path.join(data_dir, 'copymove_img', 'img')
+        image_dir = os.path.join('copymove_img', 'img')
         image_files = [
             os.path.abspath(os.path.join(image_dir, f))
             for f in os.listdir(image_dir)
@@ -455,7 +454,7 @@ class CopyMove(_BaseDataset):
             raise ValueError(f'Unknown split: {split}')
 
         # Fetch the mask files.
-        mask_dir = os.path.join(data_dir, 'copymove_annotations', 'probe_mask')
+        mask_dir = os.path.join('copymove_annotations', 'probe_mask')
 
         self.mask_files = []
         for f in self.image_files:
@@ -540,7 +539,7 @@ class Inpainting(_BaseDataset):
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
-        super().__init__(crop_size, pixel_range)
+        super().__init__(data_dir, crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -550,7 +549,7 @@ class Inpainting(_BaseDataset):
             )
 
         # Fetch the image filenames.
-        image_dir = os.path.join(data_dir, 'inpainting_img', 'img')
+        image_dir = os.path.join('inpainting_img', 'img')
         image_files = [
             os.path.abspath(os.path.join(image_dir, f))
             for f in os.listdir(image_dir)
@@ -583,7 +582,7 @@ class Inpainting(_BaseDataset):
             raise ValueError(f'Unknown split: {split}')
 
         # Fetch the mask files.
-        mask_dir = os.path.join(data_dir, 'inpainting_annotations', 'probe_mask')
+        mask_dir = os.path.join('inpainting_annotations', 'probe_mask')
 
         self.mask_files = []
         for f in self.image_files:
@@ -639,7 +638,7 @@ class CASIA2(_BaseDataset):
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
-        super().__init__(crop_size, pixel_range)
+        super().__init__(data_dir, crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -649,7 +648,7 @@ class CASIA2(_BaseDataset):
             )
 
         # Fetch the image filenames.
-        authentic_dir = os.path.join(data_dir, 'Au')
+        authentic_dir = 'Au'
         auth_files = [
             os.path.abspath(os.path.join(authentic_dir, f))
             for f in os.listdir(authentic_dir)
@@ -657,7 +656,7 @@ class CASIA2(_BaseDataset):
         ]
         auth_split_size = len(auth_files) // 10
 
-        tampered_dir = os.path.join(data_dir, 'Tp')
+        tampered_dir = 'Tp'
         tamp_files = [
             os.path.abspath(os.path.join(tampered_dir, f))
             for f in os.listdir(tampered_dir)
@@ -709,7 +708,7 @@ class CASIA2(_BaseDataset):
             self.image_files.remove(file)
 
         # Fetch the mask filenames.
-        mask_dir = os.path.join(data_dir, 'CASIA 2 Groundtruth')
+        mask_dir = 'CASIA 2 Groundtruth'
         mask_files = [
             os.path.abspath(os.path.join(mask_dir, f))
             for f in os.listdir(mask_dir)
@@ -790,7 +789,7 @@ class Coverage(_BaseDataset):
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
-        super().__init__(crop_size, pixel_range)
+        super().__init__(data_dir, crop_size, pixel_range)
 
         assert mask_type in ['forged', 'copy', 'paste']
 
@@ -802,9 +801,9 @@ class Coverage(_BaseDataset):
             )
 
         # Fetch the image filenames.
-        image_dir = os.path.join(data_dir, 'image')
+        image_dir = 'image'
         self.image_files = [
-            os.path.abspath(os.path.join(image_dir, f))
+            os.path.join(image_dir, f)
             for f in os.listdir(image_dir)
             if f.endswith('tif') or f.endswith('jpg')
         ]
@@ -814,7 +813,7 @@ class Coverage(_BaseDataset):
         self.image_files = np.random.permutation(self.image_files).tolist()
 
         # Fetch the mask filenames in the correct order.
-        mask_dir = os.path.abspath(os.path.join(data_dir, 'mask'))
+        mask_dir = 'mask'
         mask_files = [
             os.path.abspath(os.path.join(mask_dir, f))
             for f in os.listdir(mask_dir)
@@ -877,7 +876,7 @@ class IMD2020(_BaseDataset):
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
     ) -> None:
-        super().__init__(crop_size, pixel_range)
+        super().__init__(data_dir, crop_size, pixel_range)
 
         if download:
             raise NotImplementedError(
@@ -886,11 +885,7 @@ class IMD2020(_BaseDataset):
                 'for more information: http://staff.utia.cas.cz/novozada/db/.'
             )
 
-        subdirs = [
-            os.path.join(data_dir, subdir)
-            for subdir in os.listdir(data_dir)
-            if '.' not in subdir
-        ]
+        subdirs = [subdir for subdir in os.listdir(data_dir) if '.' not in subdir]
 
         # Fetch the authentic image filenames (they end in orig.jpg).
         image_files, mask_files = [], []
