@@ -292,9 +292,9 @@ class Splicing(_BaseDataset):
         # Fetch the image filenames.
         image_dirs = [os.path.join(f'splicing_{i}_img', 'img') for i in range(1, 8)]
         image_files = [
-            os.path.abspath(os.path.join(shard, f))
+            os.path.join(shard, f)
             for shard in image_dirs
-            for f in os.listdir(shard)
+            for f in os.listdir(data_dir, shard)
             if f.endswith('tif') or f.endswith('jpg')
         ]
 
@@ -331,7 +331,7 @@ class Splicing(_BaseDataset):
         for f in self.image_files:
             shard = f.split('/')[-3].split('_')[-2]
             f = f.split('/')[-1]
-            mask_file = os.path.abspath(os.path.join(mask_dirs[int(shard) - 1], f))
+            mask_file = os.path.join(mask_dirs[int(shard) - 1], f)
             if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
                 self.mask_files.append(mask_file.replace('.jpg', '.tif'))
             elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
@@ -423,7 +423,7 @@ class CopyMove(_BaseDataset):
         # Fetch the image filenames.
         image_dir = os.path.join('copymove_img', 'img')
         image_files = [
-            os.path.abspath(os.path.join(image_dir, f))
+            os.path.join(image_dir, f)
             for f in os.listdir(image_dir)
             if f.endswith('.tif') or f.endswith('.jpg')
         ]
@@ -459,7 +459,7 @@ class CopyMove(_BaseDataset):
         self.mask_files = []
         for f in self.image_files:
             f = f.split('/')[-1]
-            mask_file = os.path.abspath(os.path.join(mask_dir, f))
+            mask_file = os.path.join(mask_dir, f)
             if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
                 self.mask_files.append(mask_file.replace('.jpg', '.tif'))
             elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
@@ -551,7 +551,7 @@ class Inpainting(_BaseDataset):
         # Fetch the image filenames.
         image_dir = os.path.join('inpainting_img', 'img')
         image_files = [
-            os.path.abspath(os.path.join(image_dir, f))
+            os.path.join(image_dir, f)
             for f in os.listdir(image_dir)
             if f.endswith('.tif') or f.endswith('.jpg')
         ]
@@ -587,7 +587,7 @@ class Inpainting(_BaseDataset):
         self.mask_files = []
         for f in self.image_files:
             f = f.split('/')[-1]
-            mask_file = os.path.abspath(os.path.join(mask_dir, f))
+            mask_file = os.path.join(mask_dir, f)
             if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
                 self.mask_files.append(mask_file.replace('.jpg', '.tif'))
             elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
@@ -650,7 +650,7 @@ class CASIA2(_BaseDataset):
         # Fetch the image filenames.
         authentic_dir = 'Au'
         auth_files = [
-            os.path.abspath(os.path.join(authentic_dir, f))
+            os.path.join(authentic_dir, f)
             for f in os.listdir(authentic_dir)
             if f.endswith('tif') or f.endswith('jpg')
         ]
@@ -658,7 +658,7 @@ class CASIA2(_BaseDataset):
 
         tampered_dir = 'Tp'
         tamp_files = [
-            os.path.abspath(os.path.join(tampered_dir, f))
+            os.path.join(tampered_dir, f)
             for f in os.listdir(tampered_dir)
             if f.endswith('tif') or f.endswith('jpg')
         ]
@@ -710,7 +710,7 @@ class CASIA2(_BaseDataset):
         # Fetch the mask filenames.
         mask_dir = 'CASIA 2 Groundtruth'
         mask_files = [
-            os.path.abspath(os.path.join(mask_dir, f))
+            os.path.join(mask_dir, f)
             for f in os.listdir(mask_dir)
             if f.endswith('.tif') or f.endswith('.jpg') or f.endswith('.png')
         ]
@@ -728,11 +728,7 @@ class CASIA2(_BaseDataset):
             if mask is None and file.split('/')[-2] == 'Tp':
                 raise ValueError('No ground truth file found for image: ' + file)
 
-            mask_file = (
-                os.path.abspath(os.path.join(mask_dir, mask))
-                if mask is not None
-                else None
-            )
+            mask_file = os.path.join(mask_dir, mask) if mask is not None else None
             self.mask_files.append(mask_file)
 
 
@@ -815,16 +811,14 @@ class Coverage(_BaseDataset):
         # Fetch the mask filenames in the correct order.
         mask_dir = 'mask'
         mask_files = [
-            os.path.abspath(os.path.join(mask_dir, f))
-            for f in os.listdir(mask_dir)
-            if '.tif' in f
+            os.path.join(mask_dir, f) for f in os.listdir(mask_dir) if '.tif' in f
         ]
         self.mask_files = []
         for f in self.image_files:
             f_name = f.split('.')[0]
             if f_name[-1] == 't':
                 mask_file = f_name.split('/')[-1][:-1] + mask_type + '.tif'
-                mask_file = os.path.abspath(os.path.join(mask_dir, mask_file))
+                mask_file = os.path.join(mask_dir, mask_file)
                 assert mask_file in mask_files
             else:
                 mask_file = None
@@ -892,10 +886,10 @@ class IMD2020(_BaseDataset):
         for subdir in subdirs:
             for f in os.listdir(subdir):
                 if 'orig' in f:
-                    image_files.append(os.path.abspath(os.path.join(subdir, f)))
+                    image_files.append(os.path.join(subdir, f))
                     mask_files.append(None)
                 elif 'mask' in f:
-                    mask_file = os.path.abspath(os.path.join(subdir, f))
+                    mask_file = os.path.join(subdir, f)
                     mask_files.append(mask_file)
 
                     # Locate the corresponding image file.
