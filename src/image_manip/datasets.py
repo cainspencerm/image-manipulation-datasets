@@ -424,7 +424,7 @@ class CopyMove(_BaseDataset):
         image_dir = os.path.join('copymove_img', 'img')
         image_files = [
             os.path.join(image_dir, f)
-            for f in os.listdir(image_dir)
+            for f in os.listdir(os.path.join(data_dir, image_dir))
             if f.endswith('.tif') or f.endswith('.jpg')
         ]
 
@@ -552,7 +552,7 @@ class Inpainting(_BaseDataset):
         image_dir = os.path.join('inpainting_img', 'img')
         image_files = [
             os.path.join(image_dir, f)
-            for f in os.listdir(image_dir)
+            for f in os.listdir(os.path.join(data_dir, image_dir))
             if f.endswith('.tif') or f.endswith('.jpg')
         ]
 
@@ -651,7 +651,7 @@ class CASIA2(_BaseDataset):
         authentic_dir = 'Au'
         auth_files = [
             os.path.join(authentic_dir, f)
-            for f in os.listdir(authentic_dir)
+            for f in os.listdir(os.path.join(data_dir, authentic_dir))
             if f.endswith('tif') or f.endswith('jpg')
         ]
         auth_split_size = len(auth_files) // 10
@@ -659,7 +659,7 @@ class CASIA2(_BaseDataset):
         tampered_dir = 'Tp'
         tamp_files = [
             os.path.join(tampered_dir, f)
-            for f in os.listdir(tampered_dir)
+            for f in os.listdir(os.path.join(data_dir, tampered_dir))
             if f.endswith('tif') or f.endswith('jpg')
         ]
         tamp_split_size = len(tamp_files) // 10
@@ -711,7 +711,7 @@ class CASIA2(_BaseDataset):
         mask_dir = 'CASIA 2 Groundtruth'
         mask_files = [
             os.path.join(mask_dir, f)
-            for f in os.listdir(mask_dir)
+            for f in os.listdir(os.path.join(data_dir, mask_dir))
             if f.endswith('.tif') or f.endswith('.jpg') or f.endswith('.png')
         ]
 
@@ -800,7 +800,7 @@ class Coverage(_BaseDataset):
         image_dir = 'image'
         self.image_files = [
             os.path.join(image_dir, f)
-            for f in os.listdir(image_dir)
+            for f in os.listdir(os.path.join(data_dir, image_dir))
             if f.endswith('tif') or f.endswith('jpg')
         ]
 
@@ -811,7 +811,9 @@ class Coverage(_BaseDataset):
         # Fetch the mask filenames in the correct order.
         mask_dir = 'mask'
         mask_files = [
-            os.path.join(mask_dir, f) for f in os.listdir(mask_dir) if '.tif' in f
+            os.path.join(mask_dir, f)
+            for f in os.listdir(os.path.join(data_dir, mask_dir))
+            if '.tif' in f
         ]
         self.mask_files = []
         for f in self.image_files:
@@ -884,7 +886,7 @@ class IMD2020(_BaseDataset):
         # Fetch the authentic image filenames (they end in orig.jpg).
         image_files, mask_files = [], []
         for subdir in subdirs:
-            for f in os.listdir(subdir):
+            for f in os.listdir(os.path.join(data_dir, subdir)):
                 if 'orig' in f:
                     image_files.append(os.path.join(subdir, f))
                     mask_files.append(None)
