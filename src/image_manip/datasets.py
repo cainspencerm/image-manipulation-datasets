@@ -728,8 +728,7 @@ class CASIA2(_BaseDataset):
             if mask is None and file.split('/')[-2] == 'Tp':
                 raise ValueError('No ground truth file found for image: ' + file)
 
-            mask_file = os.path.join(mask_dir, mask) if mask is not None else None
-            self.mask_files.append(mask_file)
+            self.mask_files.append(mask)
 
 
 class Coverage(_BaseDataset):
