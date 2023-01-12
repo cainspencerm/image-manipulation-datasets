@@ -123,6 +123,7 @@ class _BaseDataset(data.Dataset):
         if image.mode != 'RGB':
             image = image.convert('RGB')
 
+        pixel_min, pixel_max = self.pixel_range
         if self.mask_files[idx] is None:
 
             # The mask doesn't exist; assume it has no manipulated pixels.
@@ -142,7 +143,6 @@ class _BaseDataset(data.Dataset):
             
             # Load the mask file.
             mask_file = os.path.join(self.root_dir, self.mask_files[idx])
-            pixel_min, pixel_max = self.pixel_range
 
             # Load the mask.
             mask = Image.open(mask_file)
