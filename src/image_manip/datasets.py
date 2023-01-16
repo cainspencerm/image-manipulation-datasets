@@ -101,6 +101,7 @@ class _BaseDataset(data.Dataset):
         crop_size: Tuple[int, int],
         pixel_range: Tuple[float, float],
         dtype: torch.dtype = torch.float32,
+        binary_class: bool = True,
     ):
         super().__init__()
 
@@ -108,12 +109,13 @@ class _BaseDataset(data.Dataset):
         self.crop_size = crop_size
         self.pixel_range = pixel_range
         self.data_type = dtype
+        self.binary_class = binary_class
 
         # Need to define these in the child class.
         self.image_files = None
         self.mask_files = None
 
-    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # image, mask, class
 
         # Load the image file.
         image_file = os.path.join(self.root_dir, self.image_files[idx])
@@ -125,6 +127,8 @@ class _BaseDataset(data.Dataset):
 
         pixel_min, pixel_max = self.pixel_range
         if self.mask_files[idx] is None:
+
+            binary_class = torch.tensor(False, dtype=torch.bool)
 
             # The mask doesn't exist; assume it has no manipulated pixels.
             crop_size = self.crop_size if self.crop_size is not None else image.size
@@ -140,6 +144,8 @@ class _BaseDataset(data.Dataset):
             image = torch.from_numpy(image).to(self.data_type).permute(2, 0, 1)
 
         else:
+
+            binary_class = torch.tensor(True, dtype=torch.bool)
             
             # Load the mask file.
             mask_file = os.path.join(self.root_dir, self.mask_files[idx])
@@ -173,7 +179,10 @@ class _BaseDataset(data.Dataset):
             image = torch.from_numpy(image).to(self.data_type).permute(2, 0, 1)
             mask = torch.from_numpy(mask).to(self.data_type).permute(2, 0, 1)
 
-        return image, mask
+        if self.binary_class:
+            return image, mask, binary_class
+        else:
+            return image, mask
 
     def __len__(self) -> int:
         return len(self.image_files)
@@ -989,47 +998,29 @@ def main():
     ):
         parser.error('At least one dataset directory must be specified.')
 
-    if args.splicing_data_dir is not None:
-        dataset = Splicing(data_dir=args.splicing_data_dir, split='valid')
-        for image, mask in dataset:
-            print('Sample:', image.size(), mask.size())
+    def test_dataset(dataset):
+        for image, mask, bc in dataset:
+            print('Sample:', image.size(), mask.size(), bc)
             break
         print('Number of samples:', len(dataset))
+
+    if args.splicing_data_dir is not None:
+        test_dataset(Splicing(data_dir=args.splicing_data_dir, split='valid'))
 
     if args.copy_move_data_dir is not None:
-        dataset = CopyMove(data_dir=args.copy_move_data_dir, split='valid')
-        for image, mask in dataset:
-            print('Sample:', image.size(), mask.size())
-            break
-        print('Number of samples:', len(dataset))
+        test_dataset(CopyMove(data_dir=args.copy_move_data_dir, split='valid'))
 
     if args.inpainting_data_dir is not None:
-        dataset = Inpainting(data_dir=args.inpainting_data_dir, split='valid')
-        for image, mask in dataset:
-            print('Sample:', image.size(), mask.size())
-            break
-        print('Number of samples:', len(dataset))
+        test_dataset(Inpainting(data_dir=args.inpainting_data_dir, split='valid'))
 
     if args.casia2_data_dir is not None:
-        dataset = CASIA2(data_dir=args.casia2_data_dir, split='valid')
-        for image, mask in dataset:
-            print('Sample:', image.size(), mask.size())
-            break
-        print('Number of samples:', len(dataset))
+        test_dataset(CASIA2(data_dir=args.casia2_data_dir, split='valid'))
 
     if args.coverage_data_dir is not None:
-        dataset = Coverage(data_dir=args.coverage_data_dir)
-        for image, mask in dataset:
-            print('Sample:', image.size(), mask.size())
-            break
-        print('Number of samples:', len(dataset))
+        test_dataset(Coverage(data_dir=args.coverage_data_dir))
 
     if args.imd2020_data_dir is not None:
-        dataset = IMD2020(data_dir=args.imd2020_data_dir, split='valid')
-        for image, mask in dataset:
-            print('Sample:', image.size(), mask.size())
-            break
-        print('Number of samples:', len(dataset))
+        test_dataset(IMD2020(data_dir=args.imd2020_data_dir, split='valid'))
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ Ensure that the ground truth directory is in data_dir and named 'CASIA 2 Groundt
 import image_manip.datasets as imds
 
 # Create dataset object for dataloader.
-dataset = imds.Casia2(data_dir='data/CASIA2.0')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
+dataset = imds.CASIA2(data_dir='data/CASIA2.0')  # optional split=['train', 'val', 'test', 'benchmark', 'full']
 ```
 
 ### Defacto Copy/Move
