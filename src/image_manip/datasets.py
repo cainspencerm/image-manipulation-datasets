@@ -7,23 +7,24 @@ import os
 import random
 
 
-def _correct_file_extension(file: str) -> str:
+def _correct_file_extension(file: str, root_dir: str = '') -> str:
     '''Corrects the file extension of the mask file.
 
     Args:
         file (str): The file to be corrected.
+        root_dir (str, optional): The root directory of the file. Defaults to ''.
 
     Returns:
         str: The corrected file.
     '''
-    if not os.path.exists(file) and file[-3:] == 'jpg':
+    if not os.path.exists(os.path.join(root_dir, file)) and file[-3:] == 'jpg':
         file = file.replace('.jpg', '.tif')
 
-    if not os.path.exists(file) and file[-3:] == 'tif':
+    if not os.path.exists(os.path.join(root_dir, file)) and file[-3:] == 'tif':
         file = file.replace('.tif', '.jpg')
 
-    if not os.path.exists(file):
-        raise ValueError(f'File does not exist: {file}')
+    if not os.path.exists(os.path.join(root_dir, file)):
+        raise ValueError(f'File does not exist: {os.path.join(root_dir, file)}')
 
     return file
 
@@ -366,7 +367,7 @@ class Splicing(_BaseDataset):
             mask_file = os.path.join(mask_dirs[int(shard) - 1], f)
 
             # Mask files are in mixed formats, find the correct one.
-            mask_file = _correct_file_extension(mask_file)
+            mask_file = _correct_file_extension(mask_file, root_dir=data_dir)
 
             self.mask_files.append(mask_file)
 
@@ -493,7 +494,7 @@ class CopyMove(_BaseDataset):
             mask_file = os.path.join(mask_dir, f)
 
             # Mask files are in mixed formats, find the correct one.
-            mask_file = _correct_file_extension(mask_file)
+            mask_file = _correct_file_extension(mask_file, root_dir=data_dir)
 
             self.mask_files.append(mask_file)
 
@@ -620,7 +621,7 @@ class Inpainting(_BaseDataset):
             mask_file = os.path.join(mask_dir, f)
 
             # Mask files are in mixed formats, find the correct one.
-            mask_file = _correct_file_extension(mask_file)
+            mask_file = _correct_file_extension(mask_file, root_dir=data_dir)
 
             self.mask_files.append(mask_file)
 
