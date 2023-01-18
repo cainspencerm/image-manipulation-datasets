@@ -7,7 +7,7 @@ import os
 import random
 
 
-def _correct_file_extension(self, file: str) -> str:
+def _correct_file_extension(file: str) -> str:
     '''Corrects the file extension of the mask file.
 
     Args:
