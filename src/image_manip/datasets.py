@@ -7,6 +7,27 @@ import os
 import random
 
 
+def _correct_file_extension(self, file: str) -> str:
+    '''Corrects the file extension of the mask file.
+
+    Args:
+        file (str): The file to be corrected.
+
+    Returns:
+        str: The corrected file.
+    '''
+    if not os.path.exists(file) and file[-3:] == 'jpg':
+        file = file.replace('.jpg', '.tif')
+
+    if not os.path.exists(file) and file[-3:] == 'tif':
+        file = file.replace('.tif', '.jpg')
+
+    if not os.path.exists(file):
+        raise ValueError(f'File does not exist: {file}')
+
+    return file
+
+
 def crop_or_pad(
     arr: Union[List[np.ndarray], np.ndarray],
     shape: tuple,
@@ -115,7 +136,9 @@ class _BaseDataset(data.Dataset):
         self.image_files = None
         self.mask_files = None
 
-    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # image, mask, class
+    def __getitem__(
+        self, idx
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # image, mask, class
 
         # Load the image file.
         image_file = os.path.join(self.root_dir, self.image_files[idx])
@@ -146,7 +169,7 @@ class _BaseDataset(data.Dataset):
         else:
 
             binary_class = torch.tensor(True, dtype=torch.bool)
-            
+
             # Load the mask file.
             mask_file = os.path.join(self.root_dir, self.mask_files[idx])
 
@@ -341,12 +364,11 @@ class Splicing(_BaseDataset):
             shard = f.split('/')[-3].split('_')[-2]
             f = f.split('/')[-1]
             mask_file = os.path.join(mask_dirs[int(shard) - 1], f)
-            if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
-                self.mask_files.append(mask_file.replace('.jpg', '.tif'))
-            elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
-                self.mask_files.append(mask_file.replace('.tif', '.jpg'))
-            else:
-                self.mask_files.append(mask_file)
+
+            # Mask files are in mixed formats, find the correct one.
+            mask_file = _correct_file_extension(mask_file)
+
+            self.mask_files.append(mask_file)
 
 
 class CopyMove(_BaseDataset):
@@ -469,12 +491,11 @@ class CopyMove(_BaseDataset):
         for f in self.image_files:
             f = f.split('/')[-1]
             mask_file = os.path.join(mask_dir, f)
-            if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
-                self.mask_files.append(mask_file.replace('.jpg', '.tif'))
-            elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
-                self.mask_files.append(mask_file.replace('.tif', '.jpg'))
-            else:
-                self.mask_files.append(mask_file)
+
+            # Mask files are in mixed formats, find the correct one.
+            mask_file = _correct_file_extension(mask_file)
+
+            self.mask_files.append(mask_file)
 
 
 class Inpainting(_BaseDataset):
@@ -597,12 +618,11 @@ class Inpainting(_BaseDataset):
         for f in self.image_files:
             f = f.split('/')[-1]
             mask_file = os.path.join(mask_dir, f)
-            if not os.path.exists(mask_file) and mask_file[-3:] == 'jpg':
-                self.mask_files.append(mask_file.replace('.jpg', '.tif'))
-            elif not os.path.exists(mask_file) and mask_file[-3:] == 'tif':
-                self.mask_files.append(mask_file.replace('.tif', '.jpg'))
-            else:
-                self.mask_files.append(mask_file)
+
+            # Mask files are in mixed formats, find the correct one.
+            mask_file = _correct_file_extension(mask_file)
+
+            self.mask_files.append(mask_file)
 
 
 class CASIA2(_BaseDataset):
