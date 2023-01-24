@@ -70,39 +70,39 @@ def crop_or_pad(
         raise ValueError('Invalid array type: {}'.format(type(arr)))
 
     # This is used to determine the starting point of the crop.
-    crop_height = (random.randint(0, max(arr_h - shape[0], 0)) // 8) * 8
-    crop_width = (random.randint(0, max(arr_w - shape[1], 0)) // 8) * 8
+    start_height = (random.randint(0, max(arr_h - shape[0], 0)) // 8) * 8
+    start_width = (random.randint(0, max(arr_w - shape[1], 0)) // 8) * 8
+    crop_start = (start_height, start_width)
 
     if isinstance(arr, list):
-        return [
-            _crop_or_pad(a, shape, (crop_height, crop_width), pv)
-            for a, pv in zip(arr, pad_value)
-        ]
+        return [_crop_or_pad(a, shape, crop_start, pv) for a, pv in zip(arr, pad_value)]
 
     elif isinstance(arr, np.ndarray):
-        return _crop_or_pad(arr, shape, (crop_height, crop_width), pad_value)
+        return _crop_or_pad(arr, shape, crop_start, pad_value)
 
 
 def _crop_or_pad(
-    arr: np.ndarray, shape: tuple, crop_start: tuple, pad_value: int = 0
+    arr: np.ndarray, shape: tuple, crop_start: tuple, pad_value: float = 0.0
 ) -> np.ndarray:
 
     # Pad in the x-axis.
     if arr.shape[0] < shape[0]:
         arr = np.pad(
             arr,
+            # ((dim_0_pad_left, dim_0_pad_right), ..., (dim_N_pad_left, dim_N_pad_right))
             ((0, shape[0] - arr.shape[0]), (0, 0), (0, 0)),
             'constant',
-            constant_values=(0, pad_value),
+            constant_values=pad_value,
         )
 
     # Pad in the y-axis.
     if arr.shape[1] < shape[1]:
         arr = np.pad(
             arr,
+            # ((dim_0_pad_left, dim_0_pad_right), ..., (dim_N_pad_left, dim_N_pad_right))
             ((0, 0), (0, shape[1] - arr.shape[1]), (0, 0)),
             'constant',
-            constant_values=(0, pad_value),
+            constant_values=pad_value,
         )
 
     # Crop in both axes at the same time.
