@@ -124,6 +124,8 @@ class _BaseDataset(data.Dataset):
         pixel_range: Tuple[float, float],
         dtype: torch.dtype = torch.float32,
         binary_class: bool = True,
+        pad_image_with: float = None,
+        pad_mask_with: float = None,
     ):
         super().__init__()
 
@@ -132,6 +134,8 @@ class _BaseDataset(data.Dataset):
         self.pixel_range = pixel_range
         self.data_type = dtype
         self.binary_class = binary_class
+        self.pad_image_with = pad_image_with
+        self.pad_mask_with = pad_mask_with
 
         # Need to define these in the child class.
         self.image_files = None
@@ -162,7 +166,13 @@ class _BaseDataset(data.Dataset):
             image = np.array(image) * (pixel_max - pixel_min) / 255.0 + pixel_min
 
             # Crop or pad the image.
-            image = crop_or_pad(image, crop_size, pad_value=pixel_max)
+            image = crop_or_pad(
+                image,
+                crop_size,
+                pad_value=pixel_max
+                if self.pad_image_with is None
+                else self.pad_image_with,
+            )
 
             # Convert the image to a tensor.
             image = torch.from_numpy(image).to(self.data_type).permute(2, 0, 1)
@@ -196,7 +206,12 @@ class _BaseDataset(data.Dataset):
                 self.crop_size if self.crop_size is not None else image.shape[:2]
             )
             image, mask = crop_or_pad(
-                [image, mask], crop_size, pad_value=[pixel_max, 1.0]
+                [image, mask],
+                crop_size,
+                pad_value=[
+                    pixel_max if self.pad_image_with is None else self.pad_image_with,
+                    1.0 if self.pad_mask_with is None else self.pad_mask_with,
+                ],
             )
 
             # Convert the image and mask to tensors.
@@ -303,6 +318,10 @@ class Splicing(_BaseDataset):
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
+        pad_image_with (float): The value to pad the image with. If None, the image
+            will be padded with the maximum value of the image.
+        pad_mask_with (float): The value to pad the mask with. If None, the mask will
+            be padded with 1.0.
     '''
 
     def __init__(
@@ -312,6 +331,8 @@ class Splicing(_BaseDataset):
         crop_size: Tuple[int, int] = (256, 256),
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
+        pad_image_with: float = None,
+        pad_mask_with: float = None,
     ) -> None:
         super().__init__(data_dir, crop_size, pixel_range)
 
@@ -433,6 +454,10 @@ class CopyMove(_BaseDataset):
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
+        pad_image_with (float): The value to pad the image with. If None, the image
+            will be padded with the maximum value of the image.
+        pad_mask_with (float): The value to pad the mask with. If None, the mask will
+            be padded with 1.0.
     '''
 
     def __init__(
@@ -442,6 +467,8 @@ class CopyMove(_BaseDataset):
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
+        pad_image_with: float = None,
+        pad_mask_with: float = None,
     ) -> None:
         super().__init__(data_dir, crop_size, pixel_range)
 
@@ -560,6 +587,10 @@ class Inpainting(_BaseDataset):
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
+        pad_image_with (float): The value to pad the image with. If None, the image
+            will be padded with the maximum value of the image.
+        pad_mask_with (float): The value to pad the mask with. If None, the mask will
+            be padded with 1.0.
     '''
 
     def __init__(
@@ -569,6 +600,8 @@ class Inpainting(_BaseDataset):
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
+        pad_image_with: float = None,
+        pad_mask_with: float = None,
     ) -> None:
         super().__init__(data_dir, crop_size, pixel_range)
 
@@ -658,6 +691,10 @@ class CASIA2(_BaseDataset):
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
+        pad_image_with (float): The value to pad the image with. If None, the image
+            will be padded with the maximum value of the image.
+        pad_mask_with (float): The value to pad the mask with. If None, the mask will
+            be padded with 1.0.
     '''
 
     def __init__(
@@ -667,6 +704,8 @@ class CASIA2(_BaseDataset):
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
+        pad_image_with: float = None,
+        pad_mask_with: float = None,
     ) -> None:
         super().__init__(data_dir, crop_size, pixel_range)
 
@@ -804,6 +843,10 @@ class Coverage(_BaseDataset):
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
+        pad_image_with (float): The value to pad the image with. If None, the image
+            will be padded with the maximum value of the image.
+        pad_mask_with (float): The value to pad the mask with. If None, the mask will
+            be padded with 1.0.
     '''
 
     def __init__(
@@ -813,6 +856,8 @@ class Coverage(_BaseDataset):
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
+        pad_image_with: float = None,
+        pad_mask_with: float = None,
     ) -> None:
         super().__init__(data_dir, crop_size, pixel_range)
 
@@ -891,6 +936,10 @@ class IMD2020(_BaseDataset):
         pixel_range (tuple): The range of the pixel values of the input images.
             Ex. (0, 1) scales the pixels from [0, 255] to [0, 1].
         download (bool): Whether to download the dataset.
+        pad_image_with (float): The value to pad the image with. If None, the image
+            will be padded with the maximum value of the image.
+        pad_mask_with (float): The value to pad the mask with. If None, the mask will
+            be padded with 1.0.
     '''
 
     def __init__(
@@ -900,6 +949,8 @@ class IMD2020(_BaseDataset):
         crop_size: Tuple[int, int] = None,
         pixel_range: Tuple[float, float] = (0.0, 1.0),
         download: bool = False,
+        pad_image_with: float = None,
+        pad_mask_with: float = None,
     ) -> None:
         super().__init__(data_dir, crop_size, pixel_range)
 
