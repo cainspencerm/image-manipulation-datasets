@@ -136,6 +136,7 @@ class _BaseDataset(data.Dataset):
         self.binary_class = binary_class
         self.pad_image_with = pad_image_with
         self.pad_mask_with = pad_mask_with
+        self._debug = False
 
         # Need to define these in the child class.
         self.image_files = None
@@ -144,6 +145,10 @@ class _BaseDataset(data.Dataset):
     def __getitem__(
         self, idx
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # image, mask, class
+
+        if self._debug:
+            print(f'Image: {self.image_files[idx]}')
+            print(f'Mask: {self.mask_files[idx]}')
 
         # Load the image file.
         image_file = os.path.join(self.root_dir, self.image_files[idx])
@@ -231,6 +236,9 @@ class _BaseDataset(data.Dataset):
         p = np.random.permutation(len(self.image_files))
         self.image_files = [self.image_files[i] for i in p]
         self.mask_files = [self.mask_files[i] for i in p]
+
+    def debug(self, debug: bool = True):
+        self._debug = debug
 
 
 class Splicing(_BaseDataset):
