@@ -330,6 +330,8 @@ class Splicing(_BaseDataset):
             will be padded with the maximum value of the image.
         pad_mask_with (float): The value to pad the mask with. If None, the mask will
             be padded with 1.0.
+        binary_class (bool): Whether to return a binary class for the image. If True,
+            the class will be 0 if the image is authentic and 1 if the image is manipulated.
     '''
 
     def __init__(
@@ -341,8 +343,16 @@ class Splicing(_BaseDataset):
         download: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
+        binary_class: bool = False,
     ) -> None:
-        super().__init__(data_dir, crop_size, pixel_range)
+        super().__init__(
+            data_dir,
+            crop_size,
+            pixel_range,
+            pad_image_with,
+            pad_mask_with,
+            binary_class,
+        )
 
         if download:
             raise NotImplementedError(
@@ -466,6 +476,8 @@ class CopyMove(_BaseDataset):
             will be padded with the maximum value of the image.
         pad_mask_with (float): The value to pad the mask with. If None, the mask will
             be padded with 1.0.
+        binary_class (bool): Whether to return a binary class for the image. If True,
+            the class will be 0 if the image is authentic and 1 if the image is manipulated.
     '''
 
     def __init__(
@@ -477,8 +489,16 @@ class CopyMove(_BaseDataset):
         download: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
+        binary_class: bool = False,
     ) -> None:
-        super().__init__(data_dir, crop_size, pixel_range)
+        super().__init__(
+            data_dir,
+            crop_size,
+            pixel_range,
+            pad_image_with,
+            pad_mask_with,
+            binary_class,
+        )
 
         if download:
             raise NotImplementedError(
@@ -599,6 +619,8 @@ class Inpainting(_BaseDataset):
             will be padded with the maximum value of the image.
         pad_mask_with (float): The value to pad the mask with. If None, the mask will
             be padded with 1.0.
+        binary_class (bool): Whether to return a binary class for the image. If True,
+            the class will be 0 if the image is authentic and 1 if the image is manipulated.
     '''
 
     def __init__(
@@ -610,8 +632,16 @@ class Inpainting(_BaseDataset):
         download: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
+        binary_class: bool = False,
     ) -> None:
-        super().__init__(data_dir, crop_size, pixel_range)
+        super().__init__(
+            data_dir,
+            crop_size,
+            pixel_range,
+            pad_image_with,
+            pad_mask_with,
+            binary_class,
+        )
 
         if download:
             raise NotImplementedError(
@@ -703,6 +733,8 @@ class CASIA2(_BaseDataset):
             will be padded with the maximum value of the image.
         pad_mask_with (float): The value to pad the mask with. If None, the mask will
             be padded with 1.0.
+        binary_class (bool): Whether to return a binary class for the image. If True,
+            the class will be 0 if the image is authentic and 1 if the image is manipulated.
     '''
 
     def __init__(
@@ -714,8 +746,16 @@ class CASIA2(_BaseDataset):
         download: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
+        binary_class: bool = False,
     ) -> None:
-        super().__init__(data_dir, crop_size, pixel_range)
+        super().__init__(
+            data_dir,
+            crop_size,
+            pixel_range,
+            pad_image_with,
+            pad_mask_with,
+            binary_class,
+        )
 
         if download:
             raise NotImplementedError(
@@ -855,6 +895,8 @@ class Coverage(_BaseDataset):
             will be padded with the maximum value of the image.
         pad_mask_with (float): The value to pad the mask with. If None, the mask will
             be padded with 1.0.
+        binary_class (bool): Whether to return a binary class for the image. If True,
+            the class will be 0 if the image is authentic and 1 if the image is manipulated.
     '''
 
     def __init__(
@@ -866,8 +908,16 @@ class Coverage(_BaseDataset):
         download: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
+        binary_class: bool = False,
     ) -> None:
-        super().__init__(data_dir, crop_size, pixel_range)
+        super().__init__(
+            data_dir,
+            crop_size,
+            pixel_range,
+            pad_image_with,
+            pad_mask_with,
+            binary_class,
+        )
 
         assert mask_type in ['forged', 'copy', 'paste']
 
@@ -948,6 +998,8 @@ class IMD2020(_BaseDataset):
             will be padded with the maximum value of the image.
         pad_mask_with (float): The value to pad the mask with. If None, the mask will
             be padded with 1.0.
+        binary_class (bool): Whether to return a binary class for the image. If True,
+            the class will be 0 if the image is authentic and 1 if the image is manipulated.
     '''
 
     def __init__(
@@ -959,8 +1011,16 @@ class IMD2020(_BaseDataset):
         download: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
+        binary_class: bool = False,
     ) -> None:
-        super().__init__(data_dir, crop_size, pixel_range)
+        super().__init__(
+            data_dir,
+            crop_size,
+            pixel_range,
+            pad_image_with,
+            pad_mask_with,
+            binary_class,
+        )
 
         if download:
             raise NotImplementedError(
