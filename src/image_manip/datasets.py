@@ -119,7 +119,7 @@ def _crop_or_pad(
 class _BaseDataset(data.Dataset):
     def __init__(
         self,
-        root_dir: str,
+        data_dir: str,
         crop_size: Tuple[int, int],
         pixel_range: Tuple[float, float],
         dtype: torch.dtype = torch.float32,
@@ -129,7 +129,7 @@ class _BaseDataset(data.Dataset):
     ):
         super().__init__()
 
-        self.root_dir = root_dir
+        self.data_dir = data_dir
         self.crop_size = crop_size
         self.pixel_range = pixel_range
         self.data_type = dtype
@@ -151,7 +151,7 @@ class _BaseDataset(data.Dataset):
             print(f'Mask: {self.mask_files[idx]}')
 
         # Load the image file.
-        image_file = os.path.join(self.root_dir, self.image_files[idx])
+        image_file = os.path.join(self.data_dir, self.image_files[idx])
         image = Image.open(image_file)
 
         # Force three color channels.
@@ -187,7 +187,7 @@ class _BaseDataset(data.Dataset):
             binary_class = torch.tensor(True, dtype=torch.bool)
 
             # Load the mask file.
-            mask_file = os.path.join(self.root_dir, self.mask_files[idx])
+            mask_file = os.path.join(self.data_dir, self.mask_files[idx])
 
             # Load the mask.
             mask = Image.open(mask_file)
