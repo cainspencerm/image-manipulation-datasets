@@ -123,7 +123,7 @@ class _BaseDataset(data.Dataset):
         crop_size: Tuple[int, int],
         pixel_range: Tuple[float, float],
         dtype: torch.dtype = torch.float32,
-        binary_class: bool = True,
+        binary_class: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
     ):
@@ -346,12 +346,12 @@ class Splicing(_BaseDataset):
         binary_class: bool = False,
     ) -> None:
         super().__init__(
-            data_dir,
-            crop_size,
-            pixel_range,
-            pad_image_with,
-            pad_mask_with,
-            binary_class,
+            data_dir=data_dir,
+            crop_size=crop_size,
+            pixel_range=pixel_range,
+            pad_image_with=pad_image_with,
+            pad_mask_with=pad_mask_with,
+            binary_class=binary_class,
         )
 
         if download:
@@ -492,12 +492,12 @@ class CopyMove(_BaseDataset):
         binary_class: bool = False,
     ) -> None:
         super().__init__(
-            data_dir,
-            crop_size,
-            pixel_range,
-            pad_image_with,
-            pad_mask_with,
-            binary_class,
+            data_dir=data_dir,
+            crop_size=crop_size,
+            pixel_range=pixel_range,
+            pad_image_with=pad_image_with,
+            pad_mask_with=pad_mask_with,
+            binary_class=binary_class,
         )
 
         if download:
@@ -635,12 +635,12 @@ class Inpainting(_BaseDataset):
         binary_class: bool = False,
     ) -> None:
         super().__init__(
-            data_dir,
-            crop_size,
-            pixel_range,
-            pad_image_with,
-            pad_mask_with,
-            binary_class,
+            data_dir=data_dir,
+            crop_size=crop_size,
+            pixel_range=pixel_range,
+            pad_image_with=pad_image_with,
+            pad_mask_with=pad_mask_with,
+            binary_class=binary_class,
         )
 
         if download:
@@ -749,12 +749,12 @@ class CASIA2(_BaseDataset):
         binary_class: bool = False,
     ) -> None:
         super().__init__(
-            data_dir,
-            crop_size,
-            pixel_range,
-            pad_image_with,
-            pad_mask_with,
-            binary_class,
+            data_dir=data_dir,
+            crop_size=crop_size,
+            pixel_range=pixel_range,
+            pad_image_with=pad_image_with,
+            pad_mask_with=pad_mask_with,
+            binary_class=binary_class,
         )
 
         if download:
@@ -911,12 +911,12 @@ class Coverage(_BaseDataset):
         binary_class: bool = False,
     ) -> None:
         super().__init__(
-            data_dir,
-            crop_size,
-            pixel_range,
-            pad_image_with,
-            pad_mask_with,
-            binary_class,
+            data_dir=data_dir,
+            crop_size=crop_size,
+            pixel_range=pixel_range,
+            pad_image_with=pad_image_with,
+            pad_mask_with=pad_mask_with,
+            binary_class=binary_class,
         )
 
         assert mask_type in ['forged', 'copy', 'paste']
@@ -1014,12 +1014,12 @@ class IMD2020(_BaseDataset):
         binary_class: bool = False,
     ) -> None:
         super().__init__(
-            data_dir,
-            crop_size,
-            pixel_range,
-            pad_image_with,
-            pad_mask_with,
-            binary_class,
+            data_dir=data_dir,
+            crop_size=crop_size,
+            pixel_range=pixel_range,
+            pad_image_with=pad_image_with,
+            pad_mask_with=pad_mask_with,
+            binary_class=binary_class,
         )
 
         if download:
