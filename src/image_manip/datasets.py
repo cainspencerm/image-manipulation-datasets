@@ -33,6 +33,8 @@ def crop_or_pad(
     arr: Union[List[np.ndarray], np.ndarray],
     shape: tuple,
     pad_value: Union[List[int], int] = 0,
+    mode: str = 'random',
+    grid_size: int = None,
 ) -> Union[List[np.ndarray], np.ndarray]:
     """Crop or pad an array (or arrays) to a given shape. Note that if multiple arrays
     are passed, they must all have the same height and width.
@@ -40,6 +42,8 @@ def crop_or_pad(
         arr (list | np.ndarray): Array to crop or pad with format [B, H, W, C] or [H, W, C].
         shape (tuple): Shape of the cropped or padded array with format [B, H, W, C] or [H, W, C].
         pad_value (list | float): Value to use for padding.
+        mode (str): Mode to use for cropping or padding. Options are 'random', 'center',
+            'top_left', 'top_right', 'bottom_left', or 'bottom_right'.
     Returns:
         Cropped or padded array with format [B, H, W, C] or [H, W, C].
     """
@@ -69,11 +73,44 @@ def crop_or_pad(
     else:
         raise ValueError('Invalid array type: {}'.format(type(arr)))
 
-    # This is used to determine the starting point of the crop.
-    start_height = (random.randint(0, max(arr_h - shape[0], 0)) // 8) * 8
-    start_width = (random.randint(0, max(arr_w - shape[1], 0)) // 8) * 8
-    crop_start = (start_height, start_width)
+    # Check grid size.
+    if grid_size is None:
+        grid_size = 1
 
+    assert type(grid_size) == int, 'Grid size must be an integer.'
+    assert grid_size > 0, 'Grid size must be greater than 0.'
+
+    # Determine the starting point of the crop.
+    if mode == 'random':
+        start_y = (random.randint(0, max(arr_h - shape[0], 0)) // grid_size) * grid_size
+        start_x = (random.randint(0, max(arr_w - shape[1], 0)) // grid_size) * grid_size
+
+    elif mode == 'center':
+        start_y = ((max(arr_h - shape[0], 0) / 2) // grid_size) * grid_size
+        start_x = ((max(arr_w - shape[1], 0) / 2) // grid_size) * grid_size
+
+    elif mode == 'top_left':
+        start_y = 0
+        start_x = 0
+
+    elif mode == 'top_right':
+        start_y = 0
+        start_x = max(arr_w - shape[1], 0)
+
+    elif mode == 'bottom_left':
+        start_y = max(arr_h - shape[0], 0)
+        start_x = 0
+
+    elif mode == 'bottom_right':
+        start_y = max(arr_h - shape[0], 0)
+        start_x = max(arr_w - shape[1], 0)
+    
+    else:
+        raise ValueError('Invalid crop mode: {}'.format(mode))
+    
+    crop_start = (start_y, start_x)
+
+    # Crop or pad the array.
     if isinstance(arr, list):
         return [_crop_or_pad(a, shape, crop_start, pv) for a, pv in zip(arr, pad_value)]
 
