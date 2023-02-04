@@ -163,6 +163,7 @@ class _BaseDataset(data.Dataset):
         binary_class: bool = False,
         pad_image_with: float = None,
         pad_mask_with: float = None,
+        crop_mode: str = 'random',
     ):
         super().__init__()
 
@@ -173,6 +174,7 @@ class _BaseDataset(data.Dataset):
         self.binary_class = binary_class
         self.pad_image_with = pad_image_with
         self.pad_mask_with = pad_mask_with
+        self.crop_mode = crop_mode
         self._debug = False
 
         # Need to define these in the child class.
@@ -214,6 +216,7 @@ class _BaseDataset(data.Dataset):
                 pad_value=pixel_max
                 if self.pad_image_with is None
                 else self.pad_image_with,
+                mode=self.crop_mode,
             )
 
             # Convert the image to a tensor.
@@ -254,6 +257,7 @@ class _BaseDataset(data.Dataset):
                     pixel_max if self.pad_image_with is None else self.pad_image_with,
                     1.0 if self.pad_mask_with is None else self.pad_mask_with,
                 ],
+                mode=self.crop_mode,
             )
 
             # Convert the image and mask to tensors.
@@ -369,6 +373,8 @@ class Splicing(_BaseDataset):
             be padded with 1.0.
         binary_class (bool): Whether to return a binary class for the image. If True,
             the class will be 0 if the image is authentic and 1 if the image is manipulated.
+        crop_mode (str): The mode to use for cropping the image and mask. Must be one
+            of 'random', 'center', 'top_left', 'top_right', 'bottom_left', or 'bottom_right'.
     '''
 
     def __init__(
@@ -381,6 +387,7 @@ class Splicing(_BaseDataset):
         pad_image_with: float = None,
         pad_mask_with: float = None,
         binary_class: bool = False,
+        crop_mode: str = 'random',
     ) -> None:
         super().__init__(
             data_dir=data_dir,
@@ -389,6 +396,7 @@ class Splicing(_BaseDataset):
             pad_image_with=pad_image_with,
             pad_mask_with=pad_mask_with,
             binary_class=binary_class,
+            crop_mode=crop_mode,
         )
 
         if download:
@@ -515,6 +523,8 @@ class CopyMove(_BaseDataset):
             be padded with 1.0.
         binary_class (bool): Whether to return a binary class for the image. If True,
             the class will be 0 if the image is authentic and 1 if the image is manipulated.
+        crop_mode (str): The mode to use for cropping the image and mask. Must be one
+            of 'random', 'center', 'top_left', 'top_right', 'bottom_left', or 'bottom_right'.
     '''
 
     def __init__(
@@ -527,6 +537,7 @@ class CopyMove(_BaseDataset):
         pad_image_with: float = None,
         pad_mask_with: float = None,
         binary_class: bool = False,
+        crop_mode: str = 'random',
     ) -> None:
         super().__init__(
             data_dir=data_dir,
@@ -535,6 +546,7 @@ class CopyMove(_BaseDataset):
             pad_image_with=pad_image_with,
             pad_mask_with=pad_mask_with,
             binary_class=binary_class,
+            crop_mode=crop_mode,
         )
 
         if download:
@@ -658,6 +670,8 @@ class Inpainting(_BaseDataset):
             be padded with 1.0.
         binary_class (bool): Whether to return a binary class for the image. If True,
             the class will be 0 if the image is authentic and 1 if the image is manipulated.
+        crop_mode (str): The mode to use for cropping the image and mask. Must be one
+            of 'random', 'center', 'top_left', 'top_right', 'bottom_left', or 'bottom_right'.
     '''
 
     def __init__(
@@ -670,6 +684,7 @@ class Inpainting(_BaseDataset):
         pad_image_with: float = None,
         pad_mask_with: float = None,
         binary_class: bool = False,
+        crop_mode: str = 'random',
     ) -> None:
         super().__init__(
             data_dir=data_dir,
@@ -678,6 +693,7 @@ class Inpainting(_BaseDataset):
             pad_image_with=pad_image_with,
             pad_mask_with=pad_mask_with,
             binary_class=binary_class,
+            crop_mode=crop_mode,
         )
 
         if download:
@@ -772,6 +788,8 @@ class CASIA2(_BaseDataset):
             be padded with 1.0.
         binary_class (bool): Whether to return a binary class for the image. If True,
             the class will be 0 if the image is authentic and 1 if the image is manipulated.
+        crop_mode (str): The mode to use for cropping the image and mask. Must be one
+            of 'random', 'center', 'top_left', 'top_right', 'bottom_left', or 'bottom_right'.
     '''
 
     def __init__(
@@ -784,6 +802,7 @@ class CASIA2(_BaseDataset):
         pad_image_with: float = None,
         pad_mask_with: float = None,
         binary_class: bool = False,
+        crop_mode: str = 'random',
     ) -> None:
         super().__init__(
             data_dir=data_dir,
@@ -792,6 +811,7 @@ class CASIA2(_BaseDataset):
             pad_image_with=pad_image_with,
             pad_mask_with=pad_mask_with,
             binary_class=binary_class,
+            crop_mode=crop_mode,
         )
 
         if download:
@@ -934,6 +954,8 @@ class Coverage(_BaseDataset):
             be padded with 1.0.
         binary_class (bool): Whether to return a binary class for the image. If True,
             the class will be 0 if the image is authentic and 1 if the image is manipulated.
+        crop_mode (str): The mode to use for cropping the image and mask. Must be one
+            of 'random', 'center', 'top_left', 'top_right', 'bottom_left', or 'bottom_right'.
     '''
 
     def __init__(
@@ -946,6 +968,7 @@ class Coverage(_BaseDataset):
         pad_image_with: float = None,
         pad_mask_with: float = None,
         binary_class: bool = False,
+        crop_mode: str = 'random',
     ) -> None:
         super().__init__(
             data_dir=data_dir,
@@ -954,6 +977,7 @@ class Coverage(_BaseDataset):
             pad_image_with=pad_image_with,
             pad_mask_with=pad_mask_with,
             binary_class=binary_class,
+            crop_mode=crop_mode,
         )
 
         assert mask_type in ['forged', 'copy', 'paste']
@@ -1037,6 +1061,8 @@ class IMD2020(_BaseDataset):
             be padded with 1.0.
         binary_class (bool): Whether to return a binary class for the image. If True,
             the class will be 0 if the image is authentic and 1 if the image is manipulated.
+        crop_mode (str): The mode to use for cropping the image and mask. Must be one
+            of 'random', 'center', 'top_left', 'top_right', 'bottom_left', or 'bottom_right'.
     '''
 
     def __init__(
@@ -1049,6 +1075,7 @@ class IMD2020(_BaseDataset):
         pad_image_with: float = None,
         pad_mask_with: float = None,
         binary_class: bool = False,
+        crop_mode: str = 'random',
     ) -> None:
         super().__init__(
             data_dir=data_dir,
@@ -1057,6 +1084,7 @@ class IMD2020(_BaseDataset):
             pad_image_with=pad_image_with,
             pad_mask_with=pad_mask_with,
             binary_class=binary_class,
+            crop_mode=crop_mode,
         )
 
         if download:
