@@ -657,7 +657,6 @@ class CASIA2(_BaseDataset):
             for f in os.listdir(authentic_dir)
             if f.endswith("tif") or f.endswith("jpg")
         ]
-        auth_split_size = len(auth_files) // 10
 
         tampered_dir = os.path.join(data_dir, "Tp")
         tamp_files = [
@@ -665,7 +664,6 @@ class CASIA2(_BaseDataset):
             for f in os.listdir(tampered_dir)
             if f.endswith("tif") or f.endswith("jpg")
         ]
-        tamp_split_size = len(tamp_files) // 10
 
         # Ignore these files that have no ground truth masks.
         corrupted_files = [
@@ -717,6 +715,8 @@ class CASIA2(_BaseDataset):
         mask_files = [mask_files[i] for i in p]
 
         # Split the filenames into use cases.
+        auth_split_size = len(auth_files) // 10
+        tamp_split_size = len(tamp_files) // 10
         if split == "train":
             self.image_files = auth_files[: auth_split_size * 8]
             self.image_files += tamp_files[: tamp_split_size * 8]
@@ -753,6 +753,10 @@ class CASIA2(_BaseDataset):
 
         else:
             raise ValueError("Unknown split: " + split)
+
+        assert len(self.image_files) == len(
+            self.mask_files
+        ), f"Number of images and masks must be the same. {len(self.image_files)} != {len(self.mask_files)}"
 
         # Shuffle the image files to mix authentic and tampered images.
         if shuffle:
