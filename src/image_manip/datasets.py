@@ -719,30 +719,30 @@ class CASIA2(_BaseDataset):
         tamp_split_size = len(tamp_files) // 10
         if split == "train":
             self.image_files = auth_files[: auth_split_size * 8]
-            self.image_files += tamp_files[: tamp_split_size * 8]
+            self.mask_files = [None for _ in range((auth_split_size * 8))]
 
-            self.mask_files = [None for _ in range(auth_split_size * 8)]
+            self.image_files += tamp_files[: tamp_split_size * 8]
             self.mask_files += mask_files[: tamp_split_size * 8]
 
         elif split == "valid":
             self.image_files = auth_files[auth_split_size * 8 : auth_split_size * 9]
-            self.image_files += tamp_files[tamp_split_size * 8 : tamp_split_size * 9]
+            self.mask_files = [None for _ in range(len(self.image_files))]
 
-            self.mask_files = [None for _ in range(auth_split_size)]
+            self.image_files += tamp_files[tamp_split_size * 8 : tamp_split_size * 9]
             self.mask_files += mask_files[tamp_split_size * 8 : tamp_split_size * 9]
 
         elif split == "test":
             self.image_files = auth_files[auth_split_size * 9 :]
-            self.image_files += tamp_files[tamp_split_size * 9 :]
+            self.mask_files = [None for _ in range(len(self.image_files))]
 
-            self.mask_files = [None for _ in range(auth_split_size)]
+            self.image_files += tamp_files[tamp_split_size * 9 :]
             self.mask_files += mask_files[tamp_split_size * 9 :]
 
         elif split == "benchmark":
             self.image_files = auth_files[:500]
-            self.image_files += tamp_files[:500]
-
             self.mask_files = [None for _ in range(500)]
+
+            self.image_files += tamp_files[:500]
             self.mask_files += mask_files[:500]
 
         elif split == "full":
@@ -753,10 +753,6 @@ class CASIA2(_BaseDataset):
 
         else:
             raise ValueError("Unknown split: " + split)
-
-        assert len(self.image_files) == len(
-            self.mask_files
-        ), f"Number of images and masks must be the same. {len(self.image_files)} != {len(self.mask_files)}"
 
         # Shuffle the image files to mix authentic and tampered images.
         if shuffle:
